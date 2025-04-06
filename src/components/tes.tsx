@@ -1,18 +1,15 @@
-"use client";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { getCookie } from "cookies-next";
-
 // import React from "react";
 
 // import SODDiagram from "@/components/SOD";
-// import GanttChart from "@/components/styles/ganntChart";
-// import { SOD } from "@/components/styles/gantt";
-// import { getColor } from "./utils/color";
-// import Shifts from "@/components/styles/break";
+// import GanttChart from "@/components/ganntChart";
+// import Shifts from "@/components/break";
+// import BarChartSimple from "@/components/simpleChart";
+// import { SOD } from "@/components/gantt";
+// import { getColor } from "@/app/utils/color";
 // import { getShifts } from "@/lib/function";
 // import Link from "next/link";
-// import BarChartSimple from "@/components/styles/simpleBar";
+// import CustomerAccordion from "@/components/accordion";
+// import { IoMdAddCircleOutline } from "react-icons/io";
 
 // type task = {
 //   processName: string;
@@ -76,9 +73,6 @@ import { getCookie } from "cookies-next";
 //   next: { revalidate: 0 },
 // });
 // const breaks = await res2.json();
-// //   return { sod, breaks };
-// // }
-// // return { sod: {}, breaks: {} };
 
 // const generateColor = (index: number): string => {
 //   const colors = [
@@ -130,27 +124,21 @@ import { getCookie } from "cookies-next";
 //     });
 
 //     const finalProcesses: Task[] = [];
-
-//     console.log(processNamesSet, "name");
-
 //     processNamesSet.forEach((processName) => {
 //       const matchingEntry = Object.entries(processOccurrences).find(
 //         ([key, cycleSet]) => {
 //           const [name] = key.split("&");
-//           console.log(name, cycleSet);
 //           return name === processName && cycleSet.size > 1;
 //         }
 //       );
 
 //       if (matchingEntry) {
-//         console.log(matchingEntry, "cocok");
 //         const [key] = matchingEntry;
 //         finalProcesses.push({
 //           ...processDetails[key],
 //           groupColor: processColors[processName],
 //         });
 //       } else {
-//         console.log(processName);
 //         finalProcesses.push({
 //           processName,
 //           waktuStart: null,
@@ -167,36 +155,10 @@ import { getCookie } from "cookies-next";
 //     };
 //   });
 // };
-export default function Home() {
-  const router = useRouter();
-  useEffect(() => {
-    const accessToken = getCookie("accessToken");
-    setTimeout(() => {
-      if (accessToken) {
-        router.replace("/dashboard");
-      } else {
-        router.replace("/login");
-      }
-    }, 1500);
-  }, [router]);
 
-  return (
-    <div className="flex items-center justify-center h-screen bg-white-100">
-      <div className="flex flex-col items-center space-y-4">
-        <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-
-        <p className="text-lg font-semibold text-emerald-900 animate-pulse">
-          Loading...
-        </p>
-      </div>
-    </div>
-  );
-}
-
+// export default async function Page() {
 //   const sod = await getSOD();
-//   console.log(sod);
 //   const hasil = SOD(sod.data);
-//   console.log(hasil);
 //   const data: ShiftResponse = await getShifts();
 
 //   const grouped: groupedCust[] = (hasil || []).reduce((acc, item) => {
@@ -223,53 +185,61 @@ export default function Home() {
 //   );
 
 //   const uniqueProcessPerCustomer = createUniqueProcessCyclePerCustomer(grouped);
-//   console.log(uniqueProcessPerCustomer, "unik");
 //   return (
-//     <div className="items-center justify-items-center p-6 sm:p-10 font-[family-name:var(--font-geist-sans)]">
-//       <main className="flex flex-col row-start-2 items-center sm:items-start">
-//         <div className="flex justify-end mt-4">
+//     <div className="items-center justify-items-center p-6 sm:p-10 font-[family-name:var(--font-poppins)] max-w-screen min-h-screen w-full h-full grow border-blue-500 border-2 flex-1">
+//       <main className="flex flex-col row-start-2 items-center sm:items-start w-full h-full min-h-screen border-red-500 border-2">
+//         <div className="w-full justify-end my-10">
 //           <Link href="/create">
-//             <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 mx-10 rounded">
-//               + Tambah Data
+//             <button className="border-emerald-600 border-2 text-emerald-600 cursor-pointer hover:bg-emerald-700 hover:text-white px-4 py-2 rounded flex items-center gap-2 ml-auto">
+//               <IoMdAddCircleOutline size={20} />
+//               Tambah Data
 //             </button>
 //           </Link>
 //         </div>
-//         <div className="grid grid-cols-1 gap-120 w-full">
-//           {grouped?.map((customer) => {
+
+//         <div className="grid grid-cols-1 gap-20 min-w-full">
+//           {grouped?.map((customer, index) => {
 //             const customerProcess = uniqueProcessPerCustomer.find(
 //               (proc) => proc.customerName === customer.customerName
 //             );
 //             return (
-//               <div
-//                 key={`${customer.customerName}`}
-//                 className={`w-full flex flex-col`}
-//               >
-//                 <SODDiagram data={sod} Customer={customer.customerName} />
-//                 <h1 className="font-bold text-xl m-6">
-//                   {customer.customerName}
-//                 </h1>
-//                 <div className="relative w-full h-[desired-height]">
-//                   <div className="w-full relative mb-10">
-//                     <Shifts data={data.data} />
-//                   </div>
-//                   <div className="absolute inset-0 top-17 z-10">
-//                     <BarChartSimple tasks={customerProcess?.process || []} />
-//                   </div>
-//                   {customer.cycles.map((cycle, index) => (
-//                     <div
-//                       key={`${customer.customerName}-${cycle.cycle}`}
-//                       className={`relative mt-${index * 1}`}
-//                     >
-//                       <GanttChart
-//                         task={cycle}
-//                         color={getColor(index)}
-//                         breaks={breaks.data}
-//                         indeks={index}
-//                         payload={allCycles}
-//                       />
+//               <div key={customer.customerName}>
+//                 <CustomerAccordion
+//                   customer={customer.customerName}
+//                   indeks={index}
+//                 >
+//                   <div
+//                     key={`${customer.customerName}`}
+//                     className={`w-full flex flex-col`}
+//                   >
+//                     <SODDiagram data={sod} Customer={customer.customerName} />
+
+//                     <div className="relative w-full min-h-fit">
+//                       <div className="w-full relative mb-10">
+//                         <Shifts data={data.data} />
+//                       </div>
+//                       <div className="absolute inset-0 top-17 z-10">
+//                         <BarChartSimple
+//                           tasks={customerProcess?.process || []}
+//                         />
+//                       </div>
+//                       {customer.cycles.map((cycle, index) => (
+//                         <div
+//                           key={`${customer.customerName}-${cycle.cycle}`}
+//                           className={`relative mt-${index * 1}`}
+//                         >
+//                           <GanttChart
+//                             task={cycle}
+//                             color={getColor(index)}
+//                             breaks={breaks.data}
+//                             indeks={index}
+//                             payload={allCycles}
+//                           />
+//                         </div>
+//                       ))}
 //                     </div>
-//                   ))}
-//                 </div>
+//                   </div>
+//                 </CustomerAccordion>
 //               </div>
 //             );
 //           })}
