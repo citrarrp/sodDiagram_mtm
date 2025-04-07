@@ -3,11 +3,7 @@ import DeleteButton from "./deleteButton";
 import { MdEdit } from "react-icons/md";
 type DiagramSOD = {
   id: number;
-  customerName: string;
   processName: string;
-  cycle: string;
-  id_process: number;
-  waktu: string;
   kode: string;
 };
 
@@ -37,29 +33,6 @@ export default async function SODDiagram({
     next: { revalidate: 0 },
   }).then((res) => res.json());
 
-  const groupedData: Record<string, Record<string, DiagramSOD[]>> = {};
-
-  sod.data.forEach((item: DiagramSOD) => {
-    if (!groupedData[item.customerName]) {
-      groupedData[item.customerName] = {};
-    }
-    if (!groupedData[item.customerName][item.cycle]) {
-      groupedData[item.customerName][item.cycle] = [];
-    }
-    groupedData[item.customerName][item.cycle].push(item);
-  });
-
-  Object.keys(groupedData).forEach((customer) => {
-    Object.keys(groupedData[customer]).forEach((cycle) => {
-      groupedData[customer][cycle].sort((a, b) => a.id - b.id);
-    });
-    Object.keys(groupedData[customer]).forEach((cycle) => {
-      groupedData[customer][cycle] = groupedData[customer][cycle].filter(
-        (item) => item.waktu == null
-      );
-    });
-  });
-
   const uniqueProcessNames: string[] = Array.from(
     new Set(
       sod.data
@@ -67,7 +40,6 @@ export default async function SODDiagram({
           ...item,
           kode: item.kode.replace(/\s\d+$/, ""),
         }))
-        .filter((item: DiagramSOD) => item.waktu != null)
         .map((item: DiagramSOD) => item.kode)
     )
   );
@@ -119,212 +91,149 @@ export default async function SODDiagram({
 
   return (
     <div className="container max-w-screen px-4 sm:px-6 lg:px-8 py-8 w-full items-center rounded-lg">
-      {Object.entries(groupedData).map(([customerName]) => (
-        <div key={customerName} className="overflow-x-auto rounded-lg shadow-md">
-          <table className="rounded-lg text-[8px] text-center table-auto w-auto border-separate border border-spacing-0 border-gray-400">
-            <thead>
-              <tr className="bg-emerald-600/80 text-white rounded-lg">
-                <th className="border px-2 py-2 border-emerald-500 rounded-tl-lg">CUSTOMER NAME</th>
-                <th className="border px-2 py-2 border-emerald-500">CYCLE</th>
-                {uniqueProcessNames.map((kode) => (
-                  <th key={kode} className="border px-2 py-2 border-emerald-500">
-                    {kode}
-                  </th>
-                ))}
-                <th className="border border-emerald-500 px-2 py-2 rounded-tr-lg">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(grouped)
-                .filter(([customer]) => customer === Customer)
-                .map(([customerName, cycles]) =>
-                  Object.entries(cycles).map(
-                    ([cycle, processes], cycleIndex) => {
-                      return (
-                        <tr key={`${customerName}-${cycle}`} className="odd:bg-gray-100 hover:bg-gray-200 transition">
-                          {cycleIndex === 0 && (
-                            <td
-                              className="border px-2 py-2 border-gray-400 font-medium text-gray-800 rounded-bl-lg"
-                              rowSpan={Object.keys(cycles).length}
-                            >
-                              {customerName}
-                            </td>
-                          )}
+      <div className="overflow-x-auto rounded-lg shadow-md">
+        <table className="rounded-lg text-[8px] text-center table-auto w-auto border-separate border border-spacing-0 border-gray-400">
+          <thead>
+            <tr className="bg-emerald-600/80 text-white rounded-lg">
+              <th className="border px-2 py-2 border-emerald-500 rounded-tl-lg">
+                CUSTOMER NAME
+              </th>
+              <th className="border px-2 py-2 border-emerald-500">CYCLE</th>
+              {uniqueProcessNames.map((kode) => (
+                <th key={kode} className="border px-2 py-2 border-emerald-500">
+                  {kode}
+                </th>
+              ))}
+              <th className="border border-emerald-500 px-2 py-2 rounded-tr-lg">
+                ACTIONS
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(grouped)
+              .filter(([customer]) => customer === Customer)
+              .map(([customerName, cycles]) =>
+                Object.entries(cycles).map(([cycle, processes], cycleIndex) => {
+                  return (
+                    <tr
+                      key={`${customerName}-${cycle}`}
+                      className="odd:bg-gray-100 hover:bg-gray-200 transition"
+                    >
+                      {cycleIndex === 0 && (
+                        <td
+                          className="border px-2 py-2 border-gray-400 font-medium text-gray-800 rounded-bl-lg"
+                          rowSpan={Object.keys(cycles).length}
+                        >
+                          {customerName}
+                        </td>
+                      )}
 
-                          <td className="border px-2 py-2 border-gray-400">{cycle}</td>
+                      <td className="border px-2 py-2 border-gray-400">
+                        {cycle}
+                      </td>
 
-                          {uniqueProcessNames.map((process) => {
-                            const matchedProcess = processes.find(
-                              (p) =>
-                                p.processName?.includes(process) ||
-                                p.processName === processMap[process]
-                            );
+                      {uniqueProcessNames.map((process) => {
+                        const matchedProcess = processes.find(
+                          (p) =>
+                            p.processName?.includes(process) ||
+                            p.processName === processMap[process]
+                        );
 
-                            let displayTime = "";
-                            if (matchedProcess) {
-                              if (process.startsWith("START")) {
-                                displayTime = `${String(
-                                  new Date(matchedProcess.waktu).getUTCHours()
-                                ).padStart(2, "0")}:${String(
-                                  new Date(matchedProcess.waktu).getUTCMinutes()
-                                ).padStart(2, "0")}`;
-                              } else if (process.startsWith("FINISH")) {
-                                if (process.includes("PULLING")) {
-                                  let total =
-                                    new Date(
-                                      matchedProcess.waktu
-                                    ).getUTCHours() *
-                                      60 +
-                                    new Date(
-                                      matchedProcess.waktu
-                                    ).getUTCMinutes() +
-                                    new Date(
-                                      matchedProcess.durasi
-                                    ).getUTCHours() *
-                                      60 +
-                                    new Date(
-                                      matchedProcess.durasi
-                                    ).getUTCMinutes();
+                        let displayTime = "";
+                        if (matchedProcess) {
+                          if (process.startsWith("START")) {
+                            displayTime = `${String(
+                              new Date(matchedProcess.waktu).getUTCHours()
+                            ).padStart(2, "0")}:${String(
+                              new Date(matchedProcess.waktu).getUTCMinutes()
+                            ).padStart(2, "0")}`;
+                          } else if (process.startsWith("FINISH")) {
+                            if (process.includes("PULLING")) {
+                              let total =
+                                new Date(matchedProcess.waktu).getUTCHours() *
+                                  60 +
+                                new Date(matchedProcess.waktu).getUTCMinutes() +
+                                new Date(matchedProcess.durasi).getUTCHours() *
+                                  60 +
+                                new Date(matchedProcess.durasi).getUTCMinutes();
 
-                                  const previousIstirahat = processes.filter(
-                                    (item) =>
-                                      item.processName.toLowerCase() ===
-                                      "istirahat"
-                                  );
-                                  previousIstirahat.forEach((item) => {
-                                    const durasiIstirahat = new Date(
-                                      item.durasi
-                                    );
-                                    total +=
-                                      durasiIstirahat.getUTCHours() * 60 +
-                                      durasiIstirahat.getUTCMinutes();
-                                  });
-                                  const finalHours =
-                                    Math.floor(total / 60) % 24;
-                                  const finalMinutes = total % 60;
-                                  displayTime = `${String(finalHours).padStart(
-                                    2,
-                                    "0"
-                                  )}:${String(finalMinutes).padStart(2, "0")}`;
-                                } else {
-                                  displayTime = addTimes(
-                                    new Date(matchedProcess.waktu),
-                                    new Date(matchedProcess.durasi)
-                                  );
-                                }
-                              } else if (
-                                process === "ISTIRAHAT" ||
-                                process === "WAITING SHIPPING AREA" ||
-                                process.includes("LAMA") ||
-                                process.includes("DURASI")
-                              ) {
-                                displayTime = `${String(
-                                  new Date(matchedProcess.durasi).getUTCHours()
-                                ).padStart(2, "0")}:${String(
-                                  new Date(
-                                    matchedProcess.durasi
-                                  ).getUTCMinutes()
-                                ).padStart(2, "0")}`;
-                              } else if (matchedProcess.waktu == null) {
-                                displayTime = "";
-                              } else {
-                                displayTime = `${String(
-                                  new Date(matchedProcess.waktu).getUTCHours()
-                                ).padStart(2, "0")}:${String(
-                                  new Date(matchedProcess.waktu).getUTCMinutes()
-                                ).padStart(2, "0")}`;
-                              }
+                              const previousIstirahat = processes.filter(
+                                (item) =>
+                                  item.processName.toLowerCase() === "istirahat"
+                              );
+                              previousIstirahat.forEach((item) => {
+                                const durasiIstirahat = new Date(item.durasi);
+                                total +=
+                                  durasiIstirahat.getUTCHours() * 60 +
+                                  durasiIstirahat.getUTCMinutes();
+                              });
+                              const finalHours = Math.floor(total / 60) % 24;
+                              const finalMinutes = total % 60;
+                              displayTime = `${String(finalHours).padStart(
+                                2,
+                                "0"
+                              )}:${String(finalMinutes).padStart(2, "0")}`;
+                            } else {
+                              displayTime = addTimes(
+                                new Date(matchedProcess.waktu),
+                                new Date(matchedProcess.durasi)
+                              );
                             }
-                            return (
-                              <td
-                                key={`${cycle}-${process}`}
-                                className="border px-2 py-2 border-gray-400 text-gray-800"
-                              >
-                                {displayTime}
-                              </td>
-                            );
-                          })}
-                          <td className={`border px-2 py-2 border-gray-400 ${cycleIndex === Object.keys(cycles).length - 1 ? "rounded-br-lg" : ""}`}>
-                            <Link href={`/update/${customerName}-${cycle}`}>
-                              <button className="bg-emerald-500/90 cursor-pointer hover:bg-emerald-600 text-white justify-center w-full py-1 flex items-center gap-1.5 rounded">
-                                <MdEdit />
-                                Update
-                              </button>
-                            </Link>
-                            <DeleteButton
-                              customer={customerName}
-                              cycle={Number(cycle)}
-                            />
+                          } else if (
+                            process === "ISTIRAHAT" ||
+                            process === "WAITING SHIPPING AREA" ||
+                            process.includes("LAMA") ||
+                            process.includes("DURASI")
+                          ) {
+                            displayTime = `${String(
+                              new Date(matchedProcess.durasi).getUTCHours()
+                            ).padStart(2, "0")}:${String(
+                              new Date(matchedProcess.durasi).getUTCMinutes()
+                            ).padStart(2, "0")}`;
+                          } else if (matchedProcess.waktu == null) {
+                            displayTime = "";
+                          } else {
+                            displayTime = `${String(
+                              new Date(matchedProcess.waktu).getUTCHours()
+                            ).padStart(2, "0")}:${String(
+                              new Date(matchedProcess.waktu).getUTCMinutes()
+                            ).padStart(2, "0")}`;
+                          }
+                        }
+                        return (
+                          <td
+                            key={`${cycle}-${process}`}
+                            className="border px-2 py-2 border-gray-400 text-gray-800"
+                          >
+                            {displayTime}
                           </td>
-                        </tr>
-                      );
-                    }
-                  )
-                )}
-            </tbody>
-          </table>
-        </div>
-      ))}
+                        );
+                      })}
+                      <td
+                        className={`border px-2 py-2 border-gray-400 ${
+                          cycleIndex === Object.keys(cycles).length - 1
+                            ? "rounded-br-lg"
+                            : ""
+                        }`}
+                      >
+                        <Link href={`/update/${customerName}-${cycle}`}>
+                          <button className="bg-emerald-500/90 cursor-pointer hover:bg-emerald-600 text-white justify-center w-full py-1 flex items-center gap-1.5 rounded">
+                            <MdEdit />
+                            Update
+                          </button>
+                        </Link>
+                        <DeleteButton
+                          customer={customerName}
+                          cycle={Number(cycle)}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
-
-//     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 w-auto">
-//       <h2 className="text-lg font-bold mb-4">{data.data[0]?.customerName}</h2>
-//       <table className="table-auto border-collapse border border-gray-400">
-//         <thead>
-//           <tr>
-//             <th className="border px-4 py-2">CUSTOMER NAME</th>
-//             <th className="border px-4 py-2">CYCLE</th>
-//             {uniqueProcessNames.map((process) => (
-//               <th key={process} className="border px-4 py-2">
-//                 {process}
-//               </th>
-//             ))}
-//           </tr>
-//         </thead>
-//         <tbody>
-// {Object.entries(groupedData).map(([customerName, cycles]) =>
-//   Object.entries(cycles).map(([cycle, processes], cycleIndex) => {
-//     return (
-//       <tr key={`${customerName}-${cycle}`}>
-//         {cycleIndex === 0 && (
-//           <td
-//             className="border px-4 py-2"
-//             rowSpan={Object.keys(cycles).length}
-//           >
-//             {customerName}
-//           </td>
-//         )}
-
-//         <td className="border px-4 py-2">{cycle}</td>
-
-//         {uniqueProcessNames.map((process) => {
-//           const matchedProcess = processes.find(
-//             (p) => p.kode === process
-//           );
-//           return (
-//             <td
-//               key={`${cycle}-${process}`}
-//               className="border px-4 py-2"
-//             >
-//               {matchedProcess?.waktu
-//                 ? new Intl.DateTimeFormat("id-ID", {
-//                     hour: "2-digit",
-//                     minute: "2-digit",
-//                     hour12: false,
-//                     timeZone: "UTC",
-//                   }).format(new Date(matchedProcess.waktu))
-//                 : ""}
-//             </td>
-//           );
-//         })}
-//       </tr>
-//     );
-//   })
-// )}
-//         </tbody>
-//       </table>
-//     </div>
-//   );
-// }

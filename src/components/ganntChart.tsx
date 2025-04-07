@@ -1,7 +1,6 @@
 "use client";
 
 import { timetoIndex } from "@/app/utils/timeDuration";
-// import { useMemo } from "react";
 import React from "react";
 import {
   ResponsiveContainer,
@@ -80,7 +79,6 @@ const GanttChart = ({
   const barHeight = 40;
   const chartHeight = task.process.length * barHeight;
 
-  console.log("data task", task);
   const groupedTasks = task.process.reduce((acc, curr) => {
     if (!acc[curr.processName]) {
       acc[curr.processName] = [];
@@ -105,19 +103,6 @@ const GanttChart = ({
 
   const taskCp = [...modifiedTasks];
 
-  // const Task = modifiedTasks.map((Task, index) => {
-  //   if (index === modifiedTasks.length - 1) {
-  //     return {
-  //       ...Task,
-  //       duration: null,
-  //       waktuFinish: null,
-  //       waktuStart: null,
-  //       preDuration: null,
-  //     };
-  //   }
-  //   return Task;
-  // });
-
   const breakItem = sodD
     .filter((item) => item.customerName === task.customerName)
     .filter((item) => Number(item.cycle) === task.cycle)
@@ -135,12 +120,9 @@ const GanttChart = ({
     ),
   };
 
-  console.log(breakTime, "istirahat", task.cycle);
-
   const modifiedTasksSplit = task.process.map((Task) => {
     const isPulling = Task.processName.includes("PULLING");
     const totalEnd = Task.waktuStart + Task.duration;
-    console.log(isPulling, Task.processName, "status");
     if (totalEnd <= 1440) {
       return {
         ...Task,
@@ -201,10 +183,6 @@ const GanttChart = ({
   const processMap = Object.fromEntries(
     domainAx.map((name, index) => [name, index])
   );
-  console.log("mapping", processMap);
-
-  console.log(modifiedTasksSplit, "data bar");
-
   const LineData = task.process.flatMap((Task, index, array) => {
     const isPulling = Task.processName.includes("PULLING");
     const current = Task.waktuStart;
@@ -215,7 +193,6 @@ const GanttChart = ({
     const lines: {
       name: number;
       TaskLine: number | null;
-      // PrevLine: number | null;
       NextLine: number | null;
     }[] = [];
 
@@ -224,13 +201,11 @@ const GanttChart = ({
         {
           name,
           TaskLine: current,
-          // PrevLine: null,
           NextLine: null,
         },
         {
           name,
           TaskLine: finish,
-          // PrevLine: null,
           NextLine: null,
         }
       );
@@ -241,79 +216,32 @@ const GanttChart = ({
         {
           name,
           TaskLine: 0,
-          // PrevLine: null,
           NextLine: null,
         },
         {
           name,
           TaskLine: overflow,
-          // PrevLine: null,
           NextLine: null,
         },
         {
           name,
           TaskLine: null,
-          // PrevLine: null,
           NextLine: null,
         },
         {
           name,
           TaskLine: current,
-          // PrevLine: null,
           NextLine: null,
         },
         {
           name,
           TaskLine: 1440,
-          // PrevLine: null,
           NextLine: null,
         }
       );
     }
-
-    // --- 2. PREV LINE ---
-    // if (prevTask) {
-    //   const prevFinish =
-    //     prevTask.waktuStart +
-    //     prevTask.duration +
-    //     (isPulling ? breakTime.waktu : 0);
-    //   // if (prevFinish > 1440 || current > 1440) {
-    //   lines.push(
-    //   {
-    //     name: processMap[`${prevTask.processName}_${indeks}`],
-    //     TaskLine: null,
-    //     PrevLine: prevFinish > 1440 ? prevFinish - 1440 : prevFinish,
-    //     NextLine: null,
-    //   },
-    //   {
-    //     name,
-    //     TaskLine: null,
-    //     PrevLine: prevFinish > 1440 ? prevFinish - 1440 : prevFinish,
-    //     NextLine: null,
-    //   }
-    // );
-    // } else {
-    //   lines.push(
-    //     {
-    //       name,
-    //       TaskLine: null,
-    //       PrevLine: prevFinish,
-    //       NextLine: null,
-    //     },
-    //     {
-    //       name,
-    //       TaskLine: null,
-    //       PrevLine: current,
-    //       NextLine: null,
-    //     }
-    //   );
-    // }
-    // }
-
-    // --- 3. NEXT LINE ---
     if (nextTask) {
       const nextStart = nextTask.waktuStart;
-      // const adjustedFinish = finish > 1440 ? finish - 1440 : finish;
       const adjustedNextStart = nextStart > 1440 ? nextStart - 1440 : nextStart;
 
       if (nextStart > finish % 1440 || nextStart == finish % 1440) {
@@ -321,19 +249,16 @@ const GanttChart = ({
           {
             name,
             TaskLine: null,
-            PrevLine: null,
             NextLine: finish % 1440,
           },
           {
             name: processMap[`${nextTask.processName}_${indeks}`],
             TaskLine: null,
-            PrevLine: null,
             NextLine: finish % 1440,
           },
           {
             name: processMap[`${nextTask.processName}_${indeks}`],
             TaskLine: null,
-            PrevLine: null,
             NextLine: adjustedNextStart,
           }
         );
@@ -342,173 +267,34 @@ const GanttChart = ({
           {
             name,
             TaskLine: null,
-            PrevLine: null,
             NextLine: finish,
           },
           {
             name,
             TaskLine: null,
-            PrevLine: null,
             NextLine: 1440,
           },
           {
             name,
             TaskLine: null,
-            PrevLine: null,
             NextLine: null,
           },
           {
             name: processMap[`${nextTask.processName}_${indeks}`],
             TaskLine: null,
-            PrevLine: null,
             NextLine: 0,
           },
           {
             name: processMap[`${nextTask.processName}_${indeks}`],
             TaskLine: null,
-            PrevLine: null,
             NextLine: nextStart,
           }
         );
       }
     }
 
-    console.log(lines, "line data");
     return lines;
   });
-
-  const dataLine = task.process.flatMap((Task, index, array) => {
-    const isPulling = Task.processName.includes("PULLING");
-    const current = Task.waktuStart;
-    const nextTask = array[index + 1];
-    const prevTask = array[index - 1];
-    const nextStart = nextTask?.waktuStart ?? null;
-    const finish = current + Task.duration + (isPulling ? breakTime.waktu : 0);
-    // const endTime = finish < current ? null : current;
-
-    const result: { name: number; time: number | null }[] = [
-      {
-        name: processMap[`${Task.processName}_${indeks}`],
-        time: current,
-      },
-      {
-        name: processMap[`${Task.processName}_${indeks}`],
-        time: finish,
-      },
-    ];
-
-    console.log(result);
-
-    if (
-      prevTask &&
-      prevTask.waktuStart +
-        prevTask.duration +
-        (isPulling ? breakTime.waktu : 0) >
-        1440
-    ) {
-      result.push({
-        name: processMap[`${Task.processName}_${indeks}`],
-        time: null,
-      });
-      result.push({
-        name: processMap[`${prevTask.processName}_${indeks}`],
-        time: Task.waktuStart,
-      });
-      // result.push({
-      //   name: processMap[`${prevTask.processName}_${indeks}`],
-      //   time: prevTask.waktuStart + prevTask.duration + (isPulling ? breakTime.waktu : 0) - 1440
-      // });
-      // result.push({
-      //   name: processMap[`${Task.processName}_${indeks}`],
-      //   time: prevTask.waktuStart + prevTask.duration + (isPulling ? breakTime.waktu : 0) - 1440
-      // });
-      // result.push({
-      //   name: processMap[`${prevTask.processName}_${indeks}`],
-      //   time: Task.waktuStart
-      // });
-    }
-
-    if (nextStart && index !== -1) {
-      if (nextStart > finish || nextStart == finish) {
-        const nextTaskFinish =
-          nextStart + nextTask.duration + (isPulling ? breakTime.waktu : 0);
-        if (nextTaskFinish > 1440) {
-          result.push({
-            name: processMap[`${Task.processName}_${indeks}`],
-            time: finish,
-          });
-          result.push({
-            name: processMap[`${nextTask.processName}_${indeks}`],
-            time: finish,
-          });
-          result.push({
-            name: processMap[`${nextTask.processName}_${indeks}`],
-            time: nextTask.waktuStart,
-          });
-          result.push({
-            name: processMap[`${nextTask.processName}_${indeks}`],
-            time: 1440,
-          });
-          result.push({
-            name: processMap[`${nextTask.processName}_${indeks}`],
-            time: null,
-          });
-
-          // result.push({
-          //   name: processMap[`${nextTask.processName}_${indeks}`],
-          //   time: 0 ,
-          // });
-          // result.push({
-          //   name: processMap[`${nextTask2.processName}_${indeks}`],
-          //   time: nextTask.duration + nextTask.waktuStart  - 1440,
-          // });
-          // result.push({
-          //   name: processMap[`${nextTask2.processName}_${indeks}`],
-          //   time: nextTask.waktuStart
-          // });
-        } else {
-          result.push({
-            name: processMap[`${Task.processName}_${indeks}`],
-            time: finish,
-          });
-
-          result.push({
-            name: processMap[`${nextTask.processName}_${indeks}`],
-            time: finish,
-          });
-
-          result.push({
-            name: processMap[`${nextTask.processName}_${indeks}`],
-            time: nextTask.waktuStart,
-          });
-        }
-      } else {
-        result.push({
-          name: processMap[`${Task.processName}_${indeks}`],
-          time: 1440,
-        });
-
-        result.push({
-          name: processMap[`${Task.processName}_${indeks}`],
-          time: null,
-        });
-
-        result.push({
-          name: processMap[`${nextTask.processName}_${indeks}`],
-          time: 0,
-        });
-
-        result.push({
-          name: processMap[`${nextTask.processName}_${indeks}`],
-          time: nextTask.waktuStart,
-        });
-      }
-    }
-    return result;
-  });
-
-  console.log(task.process);
-  console.log(dataLine, "contoh line");
 
   breaks.map((item) => {
     const istirahat: { time1: number; time2: number }[] = [];

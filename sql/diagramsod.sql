@@ -1,0 +1,72 @@
+-- phpMyAdmin SQL Dump
+-- version 5.2.0
+-- https://www.phpmyadmin.net/
+--
+-- Host: 127.0.0.1
+-- Waktu pembuatan: 07 Apr 2025 pada 05.13
+-- Versi server: 10.4.27-MariaDB
+-- Versi PHP: 8.1.12
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Database: `tes`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `diagramsod`
+--
+
+-- Dumping data untuk tabel `diagramsod`
+--
+
+INSERT INTO `diagramsod` (`id`, `processName`, `kode`) VALUES
+(1, 'RECEIVING E-KBN', 'RECEIVING E-KBN'),
+(2, 'FINISH ADMINISTRASI (90\')', 'FINISH ADMINISTRASI (90\')'),
+(3, 'WAITING POST', 'WAITING POST'),
+(4, 'SETTING KBN DI HEIJUNKA POST (60\')', 'SETTING KBN DI HEIJUNKA POST (60\')'),
+(5, 'START PULLING', 'START PULLING'),
+(6, 'ISTIRAHAT', 'ISTIRAHAT'),
+(7, 'FINISH PULLING', 'FINISH PULLING'),
+(8, 'START WRAPPING', 'START WRAPPING'),
+(9, 'LAMA WRAPPING', 'LAMA WRAPPING'),
+(10, 'FINISH WRAPPING', 'FINISH WRAPPING'),
+(11, 'WAITING SHIPPING AREA', 'WAITING SHIPPING AREA'),
+(12, 'START LOADING', 'START LOADING'),
+(13, 'LAMA LOADING', 'LAMA LOADING'),
+(14, 'FINISH LOADING', 'FINISH LOADING'),
+(15, 'DURASI PERSIAPAN', 'DURASI PERSIAPAN'),
+(16, 'TRUCK BERANGKAT', 'TRUCK BERANGKAT');
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indeks untuk tabel `diagramsod`
+--
+
+--
+-- AUTO_INCREMENT untuk tabel yang dibuang
+--
+
+--
+-- AUTO_INCREMENT untuk tabel `diagramsod`
+--
+ALTER TABLE `diagramsod`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=93;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

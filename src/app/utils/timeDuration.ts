@@ -76,8 +76,6 @@ export function calculateBreakDuration(
   pullingDuration: number,
   Break: istirahat[] = []
 ): string {
-  // if (!pullingTime) return "";
-  // else if (!pullingDuration) return "00:00";
 
   let totalBreakMinutes = 0;
 
@@ -98,7 +96,6 @@ export function calculateBreakDuration(
     }
   });
 
-  // if (totalBreakMinutes >= 1440) totalBreakMinutes -= 1440;
   const hours = Math.floor(totalBreakMinutes / 60);
   const minutes = totalBreakMinutes % 60;
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
@@ -106,59 +103,3 @@ export function calculateBreakDuration(
     "0"
   )}`;
 }
-
-// const pullingTime = processes.find(
-//   (item) =>
-//     item.processName === "PULLING (252')"
-// );
-// console.log(process, "7");
-// if (pullingTime) {
-//   const pulling =
-//     new Date(pullingTime.waktu).getUTCHours() *
-//       60 +
-//     new Date(pullingTime.waktu).getUTCMinutes();
-
-//   const finish =
-//     pulling +
-//     new Date(pullingTime.durasi).getUTCHours() *
-//       60 +
-//     new Date(
-//       pullingTime.durasi
-//     ).getUTCMinutes();
-//   let totalBreakMinutes = 0;
-//   Break.forEach((brk) => {
-//     const breakStartMin =
-//       new Date(brk.jam_mulai).getUTCHours() *
-//         60 +
-//       new Date(brk.jam_mulai).getUTCMinutes();
-
-//     const breakEndMin =
-//       new Date(brk.jam_mulai).getUTCHours() *
-//         60 +
-//       new Date(brk.jam_selesai).getUTCMinutes();
-
-//     const overlapStart = Math.max(
-//       pulling,
-//       breakStartMin
-//     );
-//     const overlapEnd = Math.min(
-//       finish,
-//       breakEndMin
-//     );
-
-//     if (overlapEnd > overlapStart) {
-//       totalBreakMinutes +=
-//         overlapEnd - overlapStart;
-//     }
-//   });
-
-//   const hours = Math.floor(
-//     totalBreakMinutes / 60
-//   );
-//   const minutes = totalBreakMinutes % 60;
-//   displayTime = `${String(hours).padStart(
-//     2,
-//     "0"
-//   )}:${String(minutes).padStart(2, "0")}`;
-//   console.log("break", totalBreakMinutes);
-// }

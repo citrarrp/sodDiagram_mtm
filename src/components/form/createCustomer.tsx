@@ -1,42 +1,3 @@
-// import { useRouter } from "next/navigation";
-// import { useState } from "react";
-
-// const UpdateForm = () => {
-//     const [customerName, setName] = useState('');
-//     const [isLoading, setLoading] = useState<boolean>(false);
-//     const router = useRouter();
-
-//     const handleSubmit = async (e: any) => {
-//         e.preventDefault();
-
-//         setLoading(true);
-
-//         await fetch('/api/sod', {
-//             method: 'POST',
-//             headers: {
-//                 'content-type': 'application/json'
-//             },
-//             body: JSON.stringify({
-//                 customerName
-//             })
-//         }).then((res) => {
-//             console.log(res)
-//         }).catch((e) => {
-//             console.log(e)
-//         })
-
-//         setLoading(false)
-//         router.push('/')
-//     }
-
-//     return (
-//         <form className="w-[500px] mx-auto pt-20 flex flex-col gap-2" onSubmit={handleSubmit}>
-//             <input type="text" placeholder="Input your Customer Name" value={customerName} onChange={(e)=> setName(e.target.value)} className="w-full border p-2 rounded-md"></input>
-//             <button disabled={isLoading}>{isLoading ? 'Loading...' : 'Submit'}</button>
-//         </form>
-//     )
-// }
-
 "use client";
 import {
   calculateBreakDuration,
@@ -177,7 +138,12 @@ const CreateForm = ({
     const isValid = (value: unknown): value is number =>
       typeof value === "number" && !isNaN(value);
 
-    if (waitingIndex !== -1 && wrappingIndex !== -1 && loadingIndex !== -1) {
+    if (
+      waitingIndex !== -1 &&
+      wrappingIndex !== -1 &&
+      loadingIndex !== -1 &&
+      index >= pullingIndex
+    ) {
       setValue(`processRows.${waitingIndex}.durasi`, "");
       const wrappingTime = parseTimetonumber(processRows[wrappingIndex]?.waktu);
       const wrappingDuration = parseTimetonumber(
@@ -190,16 +156,23 @@ const CreateForm = ({
         isValid(wrappingDuration) &&
         isValid(loadingTime)
       ) {
+        let newWaitingTime =
+          loadingTime -
+          (wrappingTime + wrappingDuration > 1440
+            ? (wrappingTime + wrappingDuration + 1440) % 1440
+            : wrappingTime + wrappingDuration);
+
+        if (newWaitingTime < 0) newWaitingTime += 1440;
+        else if (newWaitingTime > 1440) newWaitingTime %= 1440;
+
         setValue(
           `processRows.${waitingIndex}.durasi`,
-          formatDuration(
-            (loadingTime - (wrappingTime + wrappingDuration) + 1440) % 1440
-          )
+          formatDuration(newWaitingTime)
         );
       }
     }
 
-    if (breakIndex !== -1 && pullingIndex !== -1) {
+    if (breakIndex !== -1 && pullingIndex !== -1 && index >= pullingIndex) {
       setValue(`processRows.${breakIndex}.waktu`, "");
       let pullingTime = parseTimetonumber(processRows[pullingIndex].waktu);
       const pullingDuration = parseTimetonumber(
@@ -227,11 +200,6 @@ const CreateForm = ({
         setValue(`processRows.${breakIndex}.durasi`, breakDuration);
 
         if (wrappingIndex !== -1) {
-          // const newPullingTime =
-          //   parseTimetonumber(processRows[wrappingIndex].waktu) -
-          //   pullingDuration -
-          //   parseTimetonumber(breakDuration) +
-          //   1440;
           const newWrappingTime =
             parseTimetonumber(processRows[wrappingIndex].waktu) +
             parseTimetonumber(breakDuration) +
@@ -242,12 +210,17 @@ const CreateForm = ({
             formatDuration(newWrappingTime % 1440)
           );
 
-          const newWaitingTime =
-            loadingTime - newWrappingTime - wrappingDuration + +1440;
+          let newWaitingTime =
+            loadingTime -
+            (newWrappingTime + wrappingDuration > 1440
+              ? (newWrappingTime + wrappingDuration + 1440) % 1440
+              : newWrappingTime + wrappingDuration);
 
+          if (newWaitingTime < 0) newWaitingTime += 1440;
+          else if (newWaitingTime > 1440) newWaitingTime %= 1440;
           setValue(
             `processRows.${waitingIndex}.durasi`,
-            formatDuration(newWaitingTime % 1440)
+            formatDuration(newWaitingTime)
           );
         }
       }
@@ -262,6 +235,7 @@ const CreateForm = ({
             parseTimetonumber(processRows[index + 1]?.durasi) -
             lastDuration;
           if (lastTime < 0) lastTime += 1440;
+          else if (lastTime > 1440) lastTime %= 1440;
 
           setValue(`processRows.${index}.waktu`, formatDuration(lastTime));
         }
@@ -273,6 +247,7 @@ const CreateForm = ({
             parseTimetonumber(processRows[index]?.durasi) -
             prevDuration;
           if (prevTime < 0) prevTime += 1440;
+          else if (prevTime > 1440) prevTime %= 1440;
 
           setValue(`processRows.${index - 1}.waktu`, formatDuration(prevTime));
         }
@@ -301,7 +276,7 @@ const CreateForm = ({
       // }
     }
 
-    if (index < 3 && index <= processRows.length - 3 && index != -1) {
+    if (index < 2 && index <= processRows.length - 3 && index != -1) {
       for (let i = index; i < 2; i++) {
         if (processRows[i].waktu && processRows[i].durasi) {
           const prevTime = parseTimetonumber(processRows[i].waktu);
@@ -458,79 +433,4 @@ const CreateForm = ({
   );
 };
 
-//       <h3 className="font-semibold mb-5">Process Rows</h3>
-//       <div className="grid grid-cols-2 gap-x-15">
-//         {fields.map((field, index) => (
-//           <div key={field.id} className="mb-4 p-2 border rounded">
-//             <label className="block mb-1">Process Name</label>
-//             <input
-//               {...register(`processRows.${index}.processName` as const)}
-//               defaultValue={field.processName}
-//               className="w-full border px-2 py-1 mb-2 rounded"
-//               disabled
-//             />
-
-//             <label className="block mb-1">Waktu (HH:mm)</label>
-//             <Controller
-//               control={control}
-//               name={`processRows.${index}.waktu` as const}
-//               render={({ field }) => (
-//                 <input
-//                   type="text"
-//                   {...field}
-//                   className="w-full border px-2 py-1 rounded"
-//                   placeholder="00:00"
-//                 />
-//               )}
-//             />
-
-//             <label className="block mb-1">Durasi (HH:mm)</label>
-//             <Controller
-//               control={control}
-//               name={`processRows.${index}.durasi` as const}
-//               render={({ field }) => (
-//                 <input
-//                   type="text"
-//                   {...field}
-//                   className="w-full border px-2 py-1 rounded"
-//                   placeholder="08:00"
-//                 />
-//               )}
-//             />
-//           </div>
-//         ))}
-//       </div>
-
-//       <div className="w-full flex  justify-items-center ">
-//         <button
-//           type="submit"
-//           className="bg-green-700/70 text-white px-4 py-2 mb-10 rounded w-md h-fit"
-//         >
-//           Tambah Data
-//         </button>
-//       </div>
-//     </form>
-//   );
-// };
-
 export default CreateForm;
-
-// useEffect(() => {
-//   const maxId = data.length > 0 ? Math.max(...data.map((item) => item.id)) : 1;
-
-//   const initialRows = filteredData.map((item, index) => ({
-//     id: maxId + index + 1,
-//     processName: item.kode || "",
-//     kode: item.kode || "",
-//     waktu: item.waktu
-//       ? new Intl.DateTimeFormat("id-ID", {
-//         hour: "2-digit",
-//         minute: "2-digit",
-//         hour12: false,
-//         timeZone: "UTC",
-//       }).format(new Date(item.waktu))
-//       : "",
-//       id_process: item.id_process
-//   }));
-
-// }, [filteredData]);

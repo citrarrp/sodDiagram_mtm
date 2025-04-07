@@ -16,25 +16,6 @@ interface UpdatePayload {
   updates: UpdateRow[];
 }
 
-// export async function POST(req: NextRequest) {
-//   try {
-//     const process: UpdatePayload = req.body
-
-//     const { customerName, cycle, updates } = body;
-
-//     const created = await prisma.soddiagram.createMany({
-//         data: {
-//          process
-//         },
-
-//       })
-//     return res.json({ message: "Data updated successfully" }, { status: 200 });
-//   } catch (error) {
-//     console.error("Error updating data:", error);
-//     return res.json({ message: "Internal server error" }, { status: 500 });
-//   }
-// }
-
 export async function PUT(req: NextRequest) {
   try {
     const body: UpdatePayload = await req.json();

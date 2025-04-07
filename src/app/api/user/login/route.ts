@@ -4,12 +4,13 @@ import { userLoginSchema } from "../../../schema/userSchema";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import { cookies } from "next/headers";
 
 dotenv.config();
 const SECRET_KEY = process.env.JWT_SECRET || "";
 
 export async function POST(req: Request) {
-
+  const cookieStore = await cookies();
   try {
     const body = await req.json();
 
@@ -57,11 +58,12 @@ export async function POST(req: Request) {
       { status: 200 }
     );
 
-    response.cookies.set("accessToken", token, {
+    cookieStore.set("accessToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60,
       path: "/",
+      sameSite: "lax",
     });
     return response;
   } catch (err) {

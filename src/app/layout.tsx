@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import "../styles/globals.css";
 import { Toaster } from "sonner";
 import { Poppins } from "next/font/google";
-
 const poppins = Poppins({
   subsets: ["latin"],
   display: "swap",

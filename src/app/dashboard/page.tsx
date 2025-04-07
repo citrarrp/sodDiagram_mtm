@@ -1,5 +1,4 @@
 import React from "react";
-
 import SODDiagram from "@/components/SOD";
 import GanttChart from "@/components/ganntChart";
 import Shifts from "@/components/break";
@@ -59,23 +58,6 @@ type GroupedCust = {
   cycles: CycleProcess[];
 };
 
-type lineTask = {
-  newProcessName: string;
-  waktuStart: number | null;
-  duration: number;
-  color: string;
-};
-
-type lineCycle = {
-  cycle: number;
-  process: lineTask[];
-};
-
-type lineGrouped = {
-  customerName: string;
-  cycles: lineCycle[];
-};
-
 type SOD = {
   id: number;
   customerName: string;
@@ -84,22 +66,6 @@ type SOD = {
   waktu: string;
   durasi: string;
 };
-
-const getSOD = async () => {
-  // const isProduction = process.env.NODE_ENV === "production";
-
-  // if (isProduction) {
-  const res = await fetch(`${process.env.BASE_URL}/api/sod`, {
-    next: { revalidate: 0 },
-  });
-  const sod = await res.json();
-  return sod;
-};
-
-const res2 = await fetch(`${process.env.BASE_URL}/api/break/`, {
-  next: { revalidate: 0 },
-});
-const breaks = await res2.json();
 
 const generateColor = (index: number): string => {
   const colors = [
@@ -183,81 +149,32 @@ const createUniqueProcessCyclePerCustomer = (
   });
 };
 
-const createLineGrouped = (data: groupedCust[]): lineGrouped[] => {
-  return data.map((cust) => {
-    const processOccurrences: Record<string, number> = {};
-    const processDetails: Record<string, lineTask> = {};
-
-    const uniqueCycles = [...new Set(cust.cycles.map((c) => c.cycle))].sort(
-      (a, b) => a - b
-    );
-    const cycleIndexMap: Record<number, number> = {};
-    uniqueCycles.forEach((cycle, idx) => {
-      cycleIndexMap[cycle] = idx + 1;
-    });
-
-    cust.cycles.forEach((cycle) => {
-      cycle.process.forEach((proc) => {
-        console.log(cycle, "data cycle");
-        const colorIndex = cycleIndexMap[cycle.cycle];
-        const key = `${proc.processName}&${proc.waktuStart}&${proc.duration}`;
-        processOccurrences[key] = (processOccurrences[key] || 0) + 1;
-
-        // if (!processOccurrences[key]) {
-        //   processOccurrences[key] = 0;
-        // }
-        // processOccurrences[key]++;
-
-        if (!processDetails[key]) {
-          processDetails[key] = {
-            newProcessName: key,
-            waktuStart: proc.waktuStart,
-            duration: proc.duration,
-            color: getColor(colorIndex),
-          };
-        }
-      });
-    });
-    const updatedCycle = cust.cycles.map((cycle) => {
-      const finalProcess = cycle.process.map((proc) => {
-        // const newProcessname = `${proc.processName}_${cycle.cycle}`;
-        const key = `${proc.processName}&${proc.waktuStart}&${proc.duration}`;
-        const isUnique = processOccurrences[key] === 1;
-
-        return {
-          newProcessName: proc.processName,
-          waktuStart: isUnique ? null : proc.waktuStart,
-          duration: isUnique ? 0 : proc.duration,
-          color: processDetails[key].color,
-        };
-      });
-      console.log(finalProcess);
-
-      return {
-        cycle: cycle.cycle,
-        process: finalProcess,
-      };
-    });
-    console.log(updatedCycle, "updates");
-    return {
-      customerName: cust.customerName,
-      cycles: updatedCycle,
-    };
-  });
-};
-
 export default async function Page() {
+  const getSOD = async () => {
+    // const isProduction = process.env.NODE_ENV === "production";
+
+    // if (isProduction) {
+    const res = await fetch(`${process.env.BASE_URL}/api/sod`, {
+      next: { revalidate: 0 },
+    });
+    const sod = await res.json();
+    return sod;
+    // }
+  };
+
+  const res2 = await fetch(`${process.env.BASE_URL}/api/break/`, {
+    next: { revalidate: 0 },
+  });
+  const breaks = await res2.json();
+
   const sod = await getSOD();
-  console.log(sod.data, "Data sod");
   const hasil = SOD(sod.data);
   const data: ShiftResponse = await getShifts();
 
-  console.log("hasil", hasil);
   const grouped: groupedCust[] = (hasil || []).reduce((acc, item) => {
     const exist = acc.find((cust) => cust.customerName === item.customerName);
 
     if (exist) {
-      console.log(exist, "exist");
       exist.cycles.push(item);
     } else {
       acc.push({
@@ -267,8 +184,6 @@ export default async function Page() {
     }
     return acc;
   }, [] as groupedCust[]);
-
-  console.log("grouped:", grouped);
 
   const allCycles = grouped.flatMap((customer) =>
     customer.cycles.map((cycle, index) => {
@@ -302,10 +217,7 @@ export default async function Page() {
     };
   });
 
-  const uniqueLineData = createLineGrouped(grouped);
   const uniqueProcessPerCustomer = createUniqueProcessCyclePerCustomer(grouped);
-  console.log(uniqueProcessPerCustomer, "unik aj", uniqueLineData);
-
   return (
     <div className="items-center justify-items-center p-6 sm:p-10 font-[family-name:var(--poppins-font)] max-w-screen min-h-screen w-full h-full growflex-1">
       <main className="flex flex-col row-start-2 items-center sm:items-start w-full h-full min-h-screen overflow-hidden">

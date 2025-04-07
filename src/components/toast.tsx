@@ -30,37 +30,3 @@ export function useToast() {
 
   return { showToast };
 }
-
-// export default function CoolToast({
-//   status,
-//   message,
-// }: {
-//   status: "success" | "failed";
-//   message: string;
-// }) {
-//   useEffect(() => {
-//     if (status === "success") {
-//       toast.success(message, {
-//         icon: <FaCheckCircle className="text-green-500" />,
-//         duration: 5000,
-//         style: {
-//           backgroundColor: "#D1FAE5",
-//           borderLeft: "6px solid #10B981",
-//           color: "#065F46",
-//         },
-//       });
-//     } else {
-//       toast.error(message, {
-//         icon: <FaExclamationCircle className="text-red-500" />,
-//         duration: 5000,
-//         style: {
-//           backgroundColor: "#FEE2E2",
-//           borderLeft: "6px solid #EF4444",
-//           color: "#7F1D1D",
-//         },
-//       });
-//     }
-//   }, [status, message]);
-
-//   return null;
-// }

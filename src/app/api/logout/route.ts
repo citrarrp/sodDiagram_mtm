@@ -1,21 +1,17 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { serialize } from "cookie";
+import { NextResponse as res } from "next/server";
+import { cookies } from "next/headers";
 
-export default function POST(req: NextApiRequest, res: NextApiResponse) {
+export async function POST() {
+  const cookieStore = await cookies();
   try {
-    res.setHeader(
-      "Set-Cookie",
-      serialize("accessToken", "", {
-        path: "/",
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        expires: new Date(0),
-      })
-    );
-
-    return res.status(200).json({ message: "Logout successful" });
+    cookieStore.set("accessToken", "", {
+      path: "/",
+      httpOnly: true,
+      expires: new Date(0),
+    });
+    return res.json({ message: "Logout successful" }, { status: 200 });
   } catch (err) {
     console.error(err);
-    return res.status(405).json({ message: "Method Not Allowed" });
+    return res.json({ message: "Method Not Allowed" }, { status: 405 });
   }
 }
