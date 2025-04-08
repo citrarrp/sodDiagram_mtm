@@ -1,6 +1,7 @@
 import Link from "next/link";
 import DeleteButton from "./deleteButton";
 import { MdEdit } from "react-icons/md";
+import { getDiagram } from "@/lib/function";
 type DiagramSOD = {
   id: number;
   processName: string;
@@ -22,6 +23,12 @@ type SODProp = {
   data: SOD[];
 };
 
+type DiagramProp = {
+  status: number;
+  success: boolean;
+  data: DiagramSOD[];
+};
+
 export default async function SODDiagram({
   data,
   Customer,
@@ -29,16 +36,14 @@ export default async function SODDiagram({
   data: SODProp;
   Customer: string;
 }) {
-  const sod = await fetch(`${process.env.BASE_URL}/api/diagram`, {
-    next: { revalidate: 0 },
-  }).then((res) => res.json());
+  const sod: DiagramProp = await getDiagram();
 
   const uniqueProcessNames: string[] = Array.from(
     new Set(
       sod.data
         .map((item: DiagramSOD) => ({
           ...item,
-          kode: item.kode.replace(/\s\d+$/, ""),
+          kode: String(item.kode).replace(/\s\d+$/, ""),
         }))
         .map((item: DiagramSOD) => item.kode)
     )

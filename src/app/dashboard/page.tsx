@@ -5,7 +5,7 @@ import Shifts from "@/components/break";
 import BarChartSimple from "@/components/simpleChart";
 import { SOD } from "@/components/gantt";
 import { getColor } from "@/app/utils/color";
-import { getShifts } from "@/lib/function";
+import { getBreaks, getShifts, getSOD } from "@/lib/function";
 import Link from "next/link";
 import CustomerAccordion from "@/components/accordion";
 import { IoMdAddCircleOutline } from "react-icons/io";
@@ -150,26 +150,10 @@ const createUniqueProcessCyclePerCustomer = (
 };
 
 export default async function Page() {
-  const getSOD = async () => {
-    // const isProduction = process.env.NODE_ENV === "production";
-
-    // if (isProduction) {
-    const res = await fetch(`${process.env.BASE_URL}/api/sod`, {
-      next: { revalidate: 0 },
-    });
-    const sod = await res.json();
-    return sod;
-    // }
-  };
-
-  const res2 = await fetch(`${process.env.BASE_URL}/api/break/`, {
-    next: { revalidate: 0 },
-  });
-  const breaks = await res2.json();
-
   const sod = await getSOD();
   const hasil = SOD(sod.data);
   const data: ShiftResponse = await getShifts();
+  const breaks = await getBreaks();
 
   const grouped: groupedCust[] = (hasil || []).reduce((acc, item) => {
     const exist = acc.find((cust) => cust.customerName === item.customerName);

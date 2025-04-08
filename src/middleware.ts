@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   try {
     const accessToken = request.cookies.get("accessToken")?.value;
     const { pathname } = request.nextUrl;
-
+   
     if (
       !accessToken &&
       ["/dashboard", "/update", "/create"].some((route) =>

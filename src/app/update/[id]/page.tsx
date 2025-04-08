@@ -1,5 +1,5 @@
-"use server";
 import UpdateForm from "@/components/form/updateCycle";
+import { getBreaks, getCycle } from "@/lib/function";
 
 export default async function Page({
   params,
@@ -12,22 +12,8 @@ export default async function Page({
   const customerName = decodeURIComponent(customerNameRaw);
   const cycle = decodeURIComponent(cycleRaw);
 
-  const getCycle = async () => {
-    const res = await fetch(
-      `${process.env.BASE_URL}/api/diagram/${customerName}-${cycle}`,
-      {
-        next: { revalidate: 0 },
-      }
-    );
-
-    const data = await res.json();
-    return data;
-  };
-  const data = await getCycle();
-  const res2 = await fetch(`${process.env.BASE_URL}/api/break/`, {
-    next: { revalidate: 0 },
-  });
-  const breaks = await res2.json();
+  const data = await getCycle(customerName, cycle);
+  const breaks = await getBreaks();
 
   return (
     <UpdateForm

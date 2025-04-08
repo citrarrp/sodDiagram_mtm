@@ -322,17 +322,17 @@ const CreateForm = ({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-x-10 w-auto">
+      <div className="grid grid-cols-2 gap-x-10">
         {fields.map((field, index) => {
           const processName = getValues(`processRows.${index}.processName`);
 
           return (
-            <div key={field.id} className="mb-4 p-2 border rounded w-auto">
+            <div key={field.id} className="mb-4 p-2 border rounded w-full">
               <input
                 {...register(`processRows.${index}.processName` as const, {
                   required: true,
                 })}
-                className="font-semibold max-w-150"
+                className="font-semibold w-full"
                 disabled
               />
 

@@ -106,9 +106,7 @@ const UpdateForm = ({
                 timeZone: "UTC",
               }).format(new Date(row.durasi))
             )
-        )}
-        
-                                  `,
+        )}`,
       })),
     },
   });
@@ -145,6 +143,7 @@ const UpdateForm = ({
       showToast("failed", `Error updating data: ${err}`);
     }
   };
+
   const recalculatePreviousRows = (index: number) => {
     const processRows = getValues("processRows");
     let currentTime = parseTimetonumber(processRows[index].waktu ?? "");
@@ -158,12 +157,32 @@ const UpdateForm = ({
           processRows[index].durasi ?? ""
         );
         currentTime -= truckOutDuration + currentDuration;
+        if (currentTime < 0) currentTime += 1440;
+        else if (currentTime > 1440) currentTime %= 1440;
+        setValue(`processRows.${i}.waktu`, formatDuration(currentTime));   
       } else {
-        currentTime -= currentDuration;
+        if (processRows[i+1]?.processName.toLowerCase().includes("waiting")) {
+          currentTime = parseTimetonumber(processRows[i + 2].waktu ?? "");
+          currentTime =
+            currentTime -
+            parseTimetonumber(processRows[i + 1].durasi ?? "") -
+            currentDuration;
+        
+          if (currentTime < 0) currentTime += 1440;
+          else if (currentTime > 1440) currentTime %= 1440;
+          setValue(`processRows.${i-1}.waktu`, formatDuration(currentTime));   
+        } else if(processRows[i]?.processName.toLowerCase().includes("waiting") || processRows[i]?.processName.toLowerCase().includes("istirahat")){
+        
+          currentTime = parseTimetonumber(processRows[i + 1].waktu ?? "");
+        } else {
+        
+          currentTime -= currentDuration;
+      
+        }
       }
       if (currentTime < 0) currentTime += 1440;
       else if (currentTime > 1440) currentTime %= 1440;
-      setValue(`processRows.${i}.waktu`, formatDuration(currentTime));
+      setValue(`processRows.${i}.waktu`, formatDuration(currentTime));    
     }
   };
 
@@ -179,7 +198,12 @@ const UpdateForm = ({
     }
   };
 
-  const updatePullingEffects = (index: number, pulling?: number) => {
+  const updatePullingEffects = (
+    index: number,
+
+    tipe: "durasi" | "waktu",
+    pulling?: number
+  ) => {
     const processRows = getValues("processRows");
 
     const istirahatIndex = processRows.findIndex(
@@ -202,14 +226,12 @@ const UpdateForm = ({
       pullingIndex !== -1 &&
       index === wrappingIndex
     ) {
-     
       const loadingTime = parseTimetonumber(
         processRows[loadingIndex].waktu ?? ""
       );
       const waitingTime = parseTimetonumber(
         processRows[waitingIndex].durasi ?? ""
       );
-
 
       let newWrappingTime =
         loadingTime -
@@ -222,7 +244,15 @@ const UpdateForm = ({
         processRows[pullingIndex].durasi ?? ""
       );
 
-      let pullingTime = newWrappingTime - pullingDurasi;
+     
+
+      let pullingTime = 0;
+      if (tipe === "waktu") {
+        pullingTime =
+          parseTimetonumber(processRows[index]?.waktu || "") - pullingDurasi;
+      } else if (tipe === "durasi") {
+        pullingTime = newWrappingTime - pullingDurasi;
+      }
       if (pullingTime < 0) pullingTime += 1440;
       else if (pullingTime > 1440) pullingTime %= 1440;
 
@@ -290,7 +320,7 @@ const UpdateForm = ({
       else if (newPullingTime > 0) newPullingTime %= 1440;
       setValue(`processRows.${index}.waktu`, formatDuration(newPullingTime));
 
-      console.log(newPullingTime);
+     
       let newWrappingTime =
         loadingTime -
         waitingTime -
@@ -337,11 +367,12 @@ const UpdateForm = ({
     if (
       istirahatIndex !== -1 &&
       index != wrappingIndex &&
-      index != pullingIndex
+      index != pullingIndex &&
+      index != waitingIndex
     ) {
       const istirahatTime = calculateBreakDuration(
         parseTimetonumber(processRows[pullingIndex].waktu ?? ""),
-        pulling ? pulling : 0,
+        parseTimetonumber(processRows[pullingIndex].durasi ?? ""),
         breaks || []
       );
       const loadingTime = parseTimetonumber(
@@ -368,6 +399,7 @@ const UpdateForm = ({
       if (waitingDurasi < 0) waitingDurasi += 1440;
       else if (waitingDurasi > 1440) waitingDurasi %= 1440;
 
+    
       if (waitingIndex >= 0) {
         setValue(
           `processRows.${waitingIndex}.durasi`,
@@ -378,21 +410,6 @@ const UpdateForm = ({
     }
   };
 
-  const checkAndUpdatePullingDependencies = () => {
-    const processRows = getValues("processRows");
-
-    const pullingIndex = processRows.findIndex((row) =>
-      row.processName.toLowerCase().includes("pulling")
-    );
-    const wrappingIndex = processRows.findIndex((row) =>
-      row.processName.toLowerCase().includes("wrapping")
-    );
-
-    if (pullingIndex !== -1 && wrappingIndex !== -1) {
-      updatePullingEffects(pullingIndex);
-    }
-  };
-
   const handleDurasiChange = (
     index: number,
     newDuration: string,
@@ -400,22 +417,25 @@ const UpdateForm = ({
   ) => {
     const processRows = getValues("processRows");
     const currentProcess = processRows[index];
-    // const pulling = parseTimetonumber(field.value ?? "");
     setValue(`processRows.${index}.durasi`, newDuration);
 
     if (currentProcess.processName.toLowerCase().includes("pulling")) {
-      updatePullingEffects(index, parseTimetonumber(field ? field : ""));
+      updatePullingEffects(
+        index,
+        "durasi",
+        parseTimetonumber(field ? field : "")
+      );
     } else if (currentProcess.processName.toLowerCase().includes("wrapping")) {
-      updatePullingEffects(index);
+      updatePullingEffects(index, "durasi");
     } else if (currentProcess.processName.toLowerCase().includes("truck out")) {
       recalculatePreviousRows(index);
-      checkAndUpdatePullingDependencies();
+      updatePullingEffects(index, "durasi");
     } else if (currentProcess.processName.toLowerCase().includes("istirahat")) {
-      updatePullingEffects(index);
+      updatePullingEffects(index, "durasi");
     } else {
       recalculatePreviousRows(index);
       recalculateNextRows(index);
-      checkAndUpdatePullingDependencies();
+      updatePullingEffects(index, "durasi");
     }
   };
 
@@ -426,16 +446,16 @@ const UpdateForm = ({
 
     setValue(`processRows.${index}.waktu`, newTime);
     if (currentProcessName.includes("pulling")) {
-      updatePullingEffects(index);
+      updatePullingEffects(index, "waktu");
     } else if (currentProcessName.includes("wrapping")) {
-      updatePullingEffects(index);
+      updatePullingEffects(index, "waktu");
     } else if (currentProcessName.includes("truck out")) {
       recalculatePreviousRows(index);
-      checkAndUpdatePullingDependencies();
+      updatePullingEffects(index, "waktu");
     } else {
       recalculatePreviousRows(index);
       recalculateNextRows(index);
-      checkAndUpdatePullingDependencies();
+      updatePullingEffects(index, "waktu");
     }
   };
   const previousTime = useRef<string | null>(null);
@@ -476,7 +496,7 @@ const UpdateForm = ({
             <input
               {...register(`processRows.${index}.processName` as const)}
               defaultValue={field.processName}
-              className="font-semibold"
+              className="font-semibold w-full"
               disabled
             />
 

@@ -14,3 +14,51 @@ export async function getShifts() {
   return data;
   // }
 }
+
+export async function getCycle(customerName: string, cycle: string) {
+  const res = await fetch(
+    `${process.env.BASE_URL}/api/diagram/${customerName}-${cycle}`,
+    {
+      next: { revalidate: 0 },
+    }
+  );
+
+  const data = await res.json();
+  return data;
+}
+
+export async function getSOD() {
+  // const isProduction = process.env.NODE_ENV === "production";
+
+  // if (isProduction) {
+  const res = await fetch(`${process.env.BASE_URL}/api/sod`, {
+    next: { revalidate: 0 },
+  });
+  const sod = await res.json();
+  return sod;
+  // }
+}
+
+export async function getDiagram() {
+  // const isProduction = process.env.NODE_ENV === "production";
+
+  // if (isProduction) {
+  const res = await fetch(`${process.env.BASE_URL}/api/diagram`, {
+    next: { revalidate: 0 },
+  });
+  const sod = await res.json();
+  return sod;
+  // }
+}
+
+export async function getBreaks() {
+  // const isProduction = process.env.NODE_ENV === "production";
+
+  // if (isProduction) {
+  const res2 = await fetch(`${process.env.BASE_URL}/api/break/`, {
+    next: { revalidate: 0 },
+  });
+  const breaks = await res2.json();
+  return breaks;
+  // }
+}
