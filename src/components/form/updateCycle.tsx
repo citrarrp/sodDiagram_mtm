@@ -491,7 +491,10 @@ const UpdateForm = ({
       </div>
 
       <div className="grid grid-cols-2 gap-x-10 w-full">
-        {fields.map((field, index) => (
+        {fields.map((field, index) => {
+           const processName = getValues(`processRows.${index}.processName`);
+
+           return (
           <div key={field.id} className="mb-4 p-2 border rounded w-full">
             <input
               {...register(`processRows.${index}.processName` as const)}
@@ -561,8 +564,7 @@ const UpdateForm = ({
                     className="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-emerald-500 dark:focus:border-emerald-500"
                     required
                     disabled={
-                      field.name.includes("PULLING") ||
-                      field.name.includes("ISTIRAHAT")
+                      processName.toLowerCase() === "istirahat" && processName.toLowerCase() === "waiting shipping area"
                     }
                     onFocus={() => {
                       previousTime.current = field.value || "";
@@ -592,7 +594,7 @@ const UpdateForm = ({
               )}
             />
           </div>
-        ))}
+        )})}
       </div>
 
       <div className="w-full flex justify-items-center ">
