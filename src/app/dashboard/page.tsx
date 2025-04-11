@@ -76,7 +76,7 @@ const generateColor = (index: number): string => {
     "#00FFFF", // Light Cyan
     "#40E0D0", // Turquoise
     "#BFFF00", // Neon Lime
-    "#FF4500", // Neon Orange
+    "#cd4500", // Neon Orange
     "#E6E6FA", // Lavender
   ];
   return colors[index % colors.length];
@@ -94,8 +94,8 @@ const createUniqueProcessCyclePerCustomer = (
     const processNamesSet = new Set<string>();
 
     cust.cycles.forEach((cycle) => {
-      cycle.process.forEach((proc) => {
-        const key = `${proc.processName}&${proc.waktuStart}&${proc.duration}`;
+      cycle.process.forEach((proc, idx) => {
+        const key = `${proc.processName}&${proc.waktuStart}&${proc.duration}&${idx}`;
         const cycleKey = `${cust.customerName}&${cycle.cycle}`;
 
         processNamesSet.add(proc.processName);
@@ -108,9 +108,8 @@ const createUniqueProcessCyclePerCustomer = (
         if (!processDetails[key]) {
           processDetails[key] = { ...proc };
         }
-
-        if (!processColors[proc.processName]) {
-          processColors[proc.processName] = generateColor(colorIndex);
+        if (!processColors[key]) {
+          processColors[key] = generateColor(colorIndex);
           colorIndex++;
         }
       });
@@ -118,18 +117,19 @@ const createUniqueProcessCyclePerCustomer = (
 
     const finalProcesses: Task[] = [];
     processNamesSet.forEach((processName) => {
-      const matchingEntry = Object.entries(processOccurrences).find(
+      const matchingEntry = Object.entries(processOccurrences).filter(
         ([key, cycleSet]) => {
           const [name] = key.split("&");
           return name === processName && cycleSet.size > 1;
         }
       );
 
-      if (matchingEntry) {
-        const [key] = matchingEntry;
-        finalProcesses.push({
-          ...processDetails[key],
-          groupColor: processColors[processName],
+      if (matchingEntry.length > 0) {
+        matchingEntry.forEach(([key]) => {
+          finalProcesses.push({
+            ...processDetails[key],
+            groupColor: processColors[key],
+          });
         });
       } else {
         finalProcesses.push({
@@ -169,6 +169,7 @@ export default async function Page() {
     return acc;
   }, [] as groupedCust[]);
 
+
   const allCycles = grouped.flatMap((customer) =>
     customer.cycles.map((cycle, index) => {
       return {
@@ -181,7 +182,6 @@ export default async function Page() {
 
   const lineResult = grouped.map((customer) => {
     const groupedProcesses: Record<string, string[]> = {};
-
     customer.cycles
       .sort((a, b) => a.cycle - b.cycle)
       .map((cycle, index) => {
@@ -230,16 +230,16 @@ export default async function Page() {
                 >
                   <div
                     key={`${customer.customerName}`}
-                    className={`w-full flex flex-col h-full min-w-full`}
+                    className={`w-full flex flex-col min-w-full`}
                   >
                     <SODDiagram data={sod} Customer={customer.customerName} />
 
                     <GeneratePDF customer={customer.customerName}>
-                      <div className="relative w-[1150px] min-h-fit pb-115 pt-10">
+                      <div className="relative w-[1145px] pb-115 pt-5 border-1 border-black h-full">
                         <div className="w-full relative mb-10">
                           <Shifts data={data.data} />
                         </div>
-                        <div className="absolute inset-0 top-27 z-10 w-[1150px] h-auto">
+                        <div className="absolute inset-0 top-[90px] z-10 w-[1145px] h-auto mt-[1px]">
                           <BarChartSimple
                             tasks={customerProcess?.process || []}
                           />
@@ -248,7 +248,7 @@ export default async function Page() {
                         {customer.cycles.map((cycle, index) => (
                           <div
                             key={`${customer.customerName}-${cycle.cycle}`}
-                            className={`relative w-full`}
+                            className="relative w-full"
                           >
                             <GanttChart
                               sodD={sod.data}

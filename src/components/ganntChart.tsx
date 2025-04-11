@@ -361,7 +361,7 @@ const GanttChart = ({
         <ComposedChart
           data={modifiedTasksSplit}
           layout="vertical"
-          barSize={37}
+          barSize={37 + Math.round(domainAx.length / 20)}
           barGap={0}
           barCategoryGap={0}
         >
@@ -485,7 +485,7 @@ const GanttChart = ({
             dataKey="TaskLine"
             stroke={color}
             strokeWidth={2}
-            height={400}
+            height={410}
             dot={false}
             yAxisId={2}
             connectNulls={false}
@@ -498,7 +498,7 @@ const GanttChart = ({
             dataKey="NextLine"
             stroke={color}
             strokeWidth={2}
-            height={400}
+            height={410}
             dot={false}
             yAxisId={2}
             connectNulls={false}

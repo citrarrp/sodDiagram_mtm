@@ -76,7 +76,6 @@ export function calculateBreakDuration(
   pullingDuration: number,
   Break: istirahat[] = []
 ): string {
-
   let totalBreakMinutes = 0;
 
   Break.forEach((brk: istirahat) => {

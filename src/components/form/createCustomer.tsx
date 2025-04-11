@@ -12,7 +12,6 @@ import { IoArrowBackCircle, IoTime } from "react-icons/io5";
 import Link from "next/link";
 import Button from "../Button";
 import { useToast } from "../toast";
-
 interface ProcessRow {
   id: number;
   processName: string;
@@ -123,7 +122,11 @@ const CreateForm = ({
     }
   };
 
-  const updateProcessTimes = (processRows: ProcessRow[], index: number) => {
+  const updateProcessTimes = (
+    processRows: ProcessRow[],
+    index: number,
+    tipe: "durasi" | "waktu"
+  ) => {
     const getProcessIndex = (name: string) =>
       processRows.findIndex((row) =>
         row.processName.toLowerCase().includes(name)
@@ -144,31 +147,48 @@ const CreateForm = ({
       loadingIndex !== -1 &&
       index >= pullingIndex
     ) {
-      setValue(`processRows.${waitingIndex}.durasi`, "");
-      const wrappingTime = parseTimetonumber(processRows[wrappingIndex]?.waktu);
+      setValue(
+        `processRows.${waitingIndex}.durasi`,
+        processRows[waitingIndex]?.durasi
+      );
+
       const wrappingDuration = parseTimetonumber(
         processRows[wrappingIndex]?.durasi
       );
       const loadingTime = parseTimetonumber(processRows[loadingIndex]?.waktu);
 
       if (
-        isValid(wrappingTime) &&
         isValid(wrappingDuration) &&
-        isValid(loadingTime)
+        isValid(loadingTime) &&
+        isValid(parseTimetonumber(processRows[waitingIndex]?.durasi))
       ) {
-        let newWaitingTime =
+        let wrappingTime =
           loadingTime -
-          (wrappingTime + wrappingDuration > 1440
-            ? (wrappingTime + wrappingDuration + 1440) % 1440
-            : wrappingTime + wrappingDuration);
+          parseTimetonumber(processRows[waitingIndex]?.durasi) -
+          wrappingDuration;
 
-        if (newWaitingTime < 0) newWaitingTime += 1440;
-        else if (newWaitingTime > 1440) newWaitingTime %= 1440;
-
+        if (wrappingTime < 0) {
+          wrappingTime += 1440
+        
+          wrappingTime %= 1440
+        }
         setValue(
-          `processRows.${waitingIndex}.durasi`,
-          formatDuration(newWaitingTime)
+          `processRows.${wrappingIndex}.waktu`,
+          formatDuration(wrappingTime)
         );
+        // let newWaitingTime =
+        //   loadingTime -
+        //   (wrappingTime + wrappingDuration > 1440
+        //     ? (wrappingTime + wrappingDuration + 1440) % 1440
+        //     : wrappingTime + wrappingDuration);
+
+        // if (newWaitingTime < 0) newWaitingTime += 1440;
+        // else if (newWaitingTime > 1440) newWaitingTime %= 1440;
+
+        // setValue(
+        //   `processRows.${waitingIndex}.durasi`,
+        //   formatDuration(newWaitingTime)
+        // );
       }
     }
 
@@ -180,13 +200,38 @@ const CreateForm = ({
       );
 
       if (isValid(pullingDuration)) {
-        setValue(
-          `processRows.${pullingIndex}.waktu`,
-          formatDuration(
-            parseTimetonumber(processRows[wrappingIndex].waktu) -
-              pullingDuration
-          )
-        );
+        if (tipe === "durasi") {
+         if (isValid( parseTimetonumber(processRows[wrappingIndex].waktu)))
+            setValue(
+              `processRows.${pullingIndex}.durasi`,
+              processRows[pullingIndex].durasi
+            );
+          setValue(
+            `processRows.${pullingIndex}.waktu`,
+            formatDuration((
+              parseTimetonumber(processRows[wrappingIndex].waktu) -
+                pullingDuration) < 0 ?  (parseTimetonumber(processRows[wrappingIndex].waktu) -
+                pullingDuration + 1440) % 1440 :  parseTimetonumber(processRows[wrappingIndex].waktu) -
+                pullingDuration
+            )
+          );
+        
+        } else if (tipe === "waktu") {
+          setValue(
+            `processRows.${pullingIndex}.waktu`,
+            processRows[pullingIndex].waktu
+          );
+          const WrappingTime =
+            parseTimetonumber(processRows[pullingIndex].waktu) +
+            parseTimetonumber(processRows[pullingIndex].durasi) +
+            1440;
+
+          setValue(
+            `processRows.${wrappingIndex}.waktu`,
+            formatDuration(WrappingTime % 1440)
+          );
+        }
+
         pullingTime = parseTimetonumber(processRows[pullingIndex].waktu);
         const loadingTime = parseTimetonumber(processRows[loadingIndex]?.waktu);
         const wrappingDuration = parseTimetonumber(
@@ -213,11 +258,13 @@ const CreateForm = ({
           let newWaitingTime =
             loadingTime -
             (newWrappingTime + wrappingDuration > 1440
-              ? (newWrappingTime + wrappingDuration + 1440) % 1440
+              ? (newWrappingTime + wrappingDuration) % 1440
               : newWrappingTime + wrappingDuration);
 
-          if (newWaitingTime < 0) newWaitingTime += 1440;
-          else if (newWaitingTime > 1440) newWaitingTime %= 1440;
+          if (newWaitingTime < 0) {
+            newWaitingTime += 1440;
+           newWaitingTime %= 1440;
+          }
           setValue(
             `processRows.${waitingIndex}.durasi`,
             formatDuration(newWaitingTime)
@@ -290,6 +337,33 @@ const CreateForm = ({
     }
   };
 
+  const handleCustomTab = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Tab" && !e.shiftKey) {
+      e.preventDefault();
+      const allFields = Array.from(
+        document.querySelectorAll<HTMLInputElement>("input[data-id]")
+      );
+
+      const currentId = e.currentTarget.getAttribute("data-id");
+      const currentIndex = allFields.findIndex(
+        (el) => el.getAttribute("data-id") === currentId
+      );
+
+      let nextIndex: number;
+      if (currentIndex < 7) {
+        nextIndex = currentIndex + 1;
+      } else if (currentIndex === 7) {
+        nextIndex = allFields.length - 1;
+      } else if (currentIndex === 11) {
+        nextIndex = currentIndex - 2;
+      } else {
+        nextIndex = currentIndex - 1;
+      }
+
+      const nextField = allFields[nextIndex];
+      nextField?.focus();
+    }
+  };
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -305,6 +379,7 @@ const CreateForm = ({
         <input
           {...register("customerName", { required: true })}
           className="border rounded w-auto p-3"
+          autoFocus={true}
         />
       </div>
 
@@ -325,7 +400,6 @@ const CreateForm = ({
       <div className="grid grid-cols-2 gap-x-10">
         {fields.map((field, index) => {
           const processName = getValues(`processRows.${index}.processName`);
-
           return (
             <div key={field.id} className="mb-4 p-2 border rounded w-full">
               <input
@@ -334,6 +408,7 @@ const CreateForm = ({
                 })}
                 className="font-semibold w-full"
                 disabled
+                autoFocus={true}
               />
 
               {processName.toLowerCase() !== "istirahat" &&
@@ -363,6 +438,7 @@ const CreateForm = ({
                                 processName.toLowerCase() ===
                                   "waiting shipping area"
                               }
+                              // autoFocus={index === autoFocus()}
                               className="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-emerald-500 dark:focus:border-emerald-500"
                               onChange={(e) => {
                                 const formatted = formatTime(e.target.value);
@@ -376,7 +452,8 @@ const CreateForm = ({
                                   );
                                   updateProcessTimes(
                                     getValues("processRows"),
-                                    index
+                                    index,
+                                    "waktu"
                                   );
                                 } else {
                                   setError(`processRows.${index}.waktu`, {
@@ -385,6 +462,8 @@ const CreateForm = ({
                                   });
                                 }
                               }}
+                              data-id={field.name}
+                              onKeyDown={handleCustomTab}
                             />
                           )}
                         </div>
@@ -414,7 +493,11 @@ const CreateForm = ({
                         if (regex.test(formatted)) {
                           clearErrors(`processRows.${index}.durasi`);
                           setValue(`processRows.${index}.durasi`, formatted);
-                          updateProcessTimes(getValues("processRows"), index);
+                          updateProcessTimes(
+                            getValues("processRows"),
+                            index,
+                            "durasi"
+                          );
                         } else {
                           setError(`processRows.${index}.durasi`, {
                             type: "manual",
@@ -422,6 +505,9 @@ const CreateForm = ({
                           });
                         }
                       }}
+                      data-id={field.name}
+                      onKeyDown={handleCustomTab}
+                      disabled={processName.toLowerCase() === "istirahat"}
                     />
                   </div>
                 )}

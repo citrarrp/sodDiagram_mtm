@@ -134,13 +134,13 @@ const UpdateForm = ({
 
       const result = await res.json();
       if (res.status === 200) {
-        showToast("success", "Data updated successfully!");
+        showToast("success", "Data berhasil diperbarui!");
         router.push("/dashboard");
       } else {
-        showToast("failed", `Error: ${result.message}`);
+        showToast("failed", `Terjadi kesalahan saat memperbarui data:: ${result.message}`);
       }
     } catch (err) {
-      showToast("failed", `Error updating data: ${err}`);
+      showToast("failed", `Terjadi kesalahan saat memperbarui data: ${err}`);
     }
   };
 
@@ -159,30 +159,30 @@ const UpdateForm = ({
         currentTime -= truckOutDuration + currentDuration;
         if (currentTime < 0) currentTime += 1440;
         else if (currentTime > 1440) currentTime %= 1440;
-        setValue(`processRows.${i}.waktu`, formatDuration(currentTime));   
+        setValue(`processRows.${i}.waktu`, formatDuration(currentTime));
       } else {
-        if (processRows[i+1]?.processName.toLowerCase().includes("waiting")) {
+        if (processRows[i + 1]?.processName.toLowerCase().includes("waiting")) {
           currentTime = parseTimetonumber(processRows[i + 2].waktu ?? "");
           currentTime =
             currentTime -
             parseTimetonumber(processRows[i + 1].durasi ?? "") -
             currentDuration;
-        
+
           if (currentTime < 0) currentTime += 1440;
           else if (currentTime > 1440) currentTime %= 1440;
-          setValue(`processRows.${i-1}.waktu`, formatDuration(currentTime));   
-        } else if(processRows[i]?.processName.toLowerCase().includes("waiting") || processRows[i]?.processName.toLowerCase().includes("istirahat")){
-        
+          setValue(`processRows.${i - 1}.waktu`, formatDuration(currentTime));
+        } else if (
+          processRows[i]?.processName.toLowerCase().includes("waiting") ||
+          processRows[i]?.processName.toLowerCase().includes("istirahat")
+        ) {
           currentTime = parseTimetonumber(processRows[i + 1].waktu ?? "");
         } else {
-        
           currentTime -= currentDuration;
-      
         }
       }
       if (currentTime < 0) currentTime += 1440;
       else if (currentTime > 1440) currentTime %= 1440;
-      setValue(`processRows.${i}.waktu`, formatDuration(currentTime));    
+      setValue(`processRows.${i}.waktu`, formatDuration(currentTime));
     }
   };
 
@@ -243,8 +243,6 @@ const UpdateForm = ({
       const pullingDurasi = parseTimetonumber(
         processRows[pullingIndex].durasi ?? ""
       );
-
-     
 
       let pullingTime = 0;
       if (tipe === "waktu") {
@@ -320,7 +318,6 @@ const UpdateForm = ({
       else if (newPullingTime > 0) newPullingTime %= 1440;
       setValue(`processRows.${index}.waktu`, formatDuration(newPullingTime));
 
-     
       let newWrappingTime =
         loadingTime -
         waitingTime -
@@ -367,17 +364,19 @@ const UpdateForm = ({
     if (
       istirahatIndex !== -1 &&
       index != wrappingIndex &&
-      index != pullingIndex &&
-      index != waitingIndex
+      index != pullingIndex
     ) {
       const istirahatTime = calculateBreakDuration(
         parseTimetonumber(processRows[pullingIndex].waktu ?? ""),
         parseTimetonumber(processRows[pullingIndex].durasi ?? ""),
         breaks || []
       );
+      setValue(`processRows.${istirahatIndex}.durasi`, istirahatTime);
+
       const loadingTime = parseTimetonumber(
         processRows[loadingIndex].waktu ?? ""
       );
+
       let wrappingTime =
         parseTimetonumber(processRows[pullingIndex].waktu ?? "") +
         pullingDuration +
@@ -399,14 +398,12 @@ const UpdateForm = ({
       if (waitingDurasi < 0) waitingDurasi += 1440;
       else if (waitingDurasi > 1440) waitingDurasi %= 1440;
 
-    
       if (waitingIndex >= 0) {
         setValue(
           `processRows.${waitingIndex}.durasi`,
           formatDuration(waitingDurasi)
         );
       }
-      setValue(`processRows.${istirahatIndex}.durasi`, istirahatTime);
     }
   };
 
@@ -460,6 +457,33 @@ const UpdateForm = ({
   };
   const previousTime = useRef<string | null>(null);
 
+  const handleCustomTab = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Tab" && !e.shiftKey) {
+      e.preventDefault();
+      const allFields = Array.from(
+        document.querySelectorAll<HTMLInputElement>("input[data-id]")
+      );
+
+      const currentId = e.currentTarget.getAttribute("data-id");
+      const currentIndex = allFields.findIndex(
+        (el) => el.getAttribute("data-id") === currentId
+      );
+
+      let nextIndex: number;
+      if (currentIndex < 7) {
+        nextIndex = currentIndex + 1;
+      } else if (currentIndex === 7) {
+        nextIndex = allFields.length - 1;
+      } else if (currentIndex === 11) {
+        nextIndex = currentIndex - 2;
+      } else {
+        nextIndex = currentIndex - 1;
+      }
+
+      const nextField = allFields[nextIndex];
+      nextField?.focus();
+    }
+  };
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -492,110 +516,116 @@ const UpdateForm = ({
 
       <div className="grid grid-cols-2 gap-x-10 w-full">
         {fields.map((field, index) => {
-           const processName = getValues(`processRows.${index}.processName`);
+          const processName = getValues(`processRows.${index}.processName`);
 
-           return (
-          <div key={field.id} className="mb-4 p-2 border rounded w-full">
-            <input
-              {...register(`processRows.${index}.processName` as const)}
-              defaultValue={field.processName}
-              className="font-semibold w-full"
-              disabled
-            />
+          return (
+            <div key={field.id} className="mb-4 p-2 border rounded w-full">
+              <input
+                {...register(`processRows.${index}.processName` as const)}
+                defaultValue={field.processName}
+                className="font-semibold w-full"
+                disabled
+              />
 
-            {(field.waktu && field.processName != "ISTIRAHAT") ||
-            (field.waktu && field.processName != "WAITING SHIPPING AREA") ? (
-              <div>
-                <label className="block mb-1">Waktu (HH:mm)</label>
-                <Controller
-                  control={control}
-                  name={`processRows.${index}.waktu` as const}
-                  rules={{
-                    pattern: {
-                      value: /^([01]\d|2[0-3]):([0-5]\d)$/,
-                      message: "Format waktu salah! Gunakan HH:mm",
-                    },
-                  }}
-                  render={({ field }) => (
-                    <div className="relative">
-                      <div className="absolute inset-y-0 end-0 top-0 flex items-center pe-3.5 pointer-events-none">
-                        <IoTime />
-                      </div>
-                      <input
-                        type="text"
-                        {...field}
-                        value={field.value || ""}
-                        className="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-emerald-500 dark:focus:border-emerald-500"
-                        onChange={(e) => {
-                          const formatted = formatTime(e.target.value);
-                          field.onChange(formatted);
-                          const regex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-                          if (regex.test(formatted)) {
-                            clearErrors(`processRows.${index}.waktu`);
-                            setValue(`processRows.${index}.waktu`, formatted);
-                            handleWaktuChange(index, formatted);
-                          } else {
-                            setError(`processRows.${index}.waktu`, {
-                              type: "manual",
-                              message: "Format salah! Gunakan HH:mm",
-                            });
-                          }
-                        }}
-                      />
-                    </div>
-                  )}
-                />
-              </div>
-            ) : null}
-
-            <label className="block mb-1">Durasi (HH:mm)</label>
-            <Controller
-              control={control}
-              name={`processRows.${index}.durasi` as const}
-              render={({ field }) => (
-                <div className="relative">
-                  <div className="absolute inset-y-0 end-0 top-0 flex items-center pe-3.5 pointer-events-none">
-                    <IoTime />
+              {processName.toLowerCase() !== "istirahat" &&
+                processName.toLowerCase() !== "waiting shipping area" && (
+                  <div>
+                    <label className="block mb-1">Waktu (HH:mm)</label>
+                    <Controller
+                      control={control}
+                      name={`processRows.${index}.waktu` as const}
+                      rules={{
+                        pattern: {
+                          value: /^([01]\d|2[0-3]):([0-5]\d)$/,
+                          message: "Format waktu salah! Gunakan HH:mm",
+                        },
+                      }}
+                      render={({ field }) => (
+                        <div className="relative">
+                          <div className="absolute inset-y-0 end-0 top-0 flex items-center pe-3.5 pointer-events-none">
+                            <IoTime />
+                          </div>
+                          <input
+                            type="text"
+                            {...field}
+                            value={field.value || ""}
+                            autoFocus={true}
+                            className="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-emerald-500 dark:focus:border-emerald-500"
+                            onChange={(e) => {
+                              const formatted = formatTime(e.target.value);
+                              field.onChange(formatted);
+                              const regex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+                              if (regex.test(formatted)) {
+                                clearErrors(`processRows.${index}.waktu`);
+                                setValue(
+                                  `processRows.${index}.waktu`,
+                                  formatted
+                                );
+                                handleWaktuChange(index, formatted);
+                              } else {
+                                setError(`processRows.${index}.waktu`, {
+                                  type: "manual",
+                                  message: "Format salah! Gunakan HH:mm",
+                                });
+                              }
+                            }}
+                            data-id={field.name}
+                            onKeyDown={handleCustomTab}
+                          />
+                        </div>
+                      )}
+                    />
                   </div>
-                  <input
-                    type="text"
-                    {...field}
-                    value={field.value || ""}
-                    className="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-emerald-500 dark:focus:border-emerald-500"
-                    required
-                    disabled={
-                      processName.toLowerCase() === "istirahat" 
-                    || processName.toLowerCase() === "waiting shipping area"
-                    }
-                    onFocus={() => {
-                      previousTime.current = field.value || "";
-                    }}
-                    onChange={(e) => {
-                      const formatted = formatTime(e.target.value);
-                      field.onChange(formatted);
-                      const regex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-                      if (regex.test(formatted)) {
-                        clearErrors(`processRows.${index}.durasi`);
-                        setValue(`processRows.${index}.durasi`, formatted);
+                )}
 
-                        handleDurasiChange(
-                          index,
-                          formatted,
-                          previousTime.current || "00:00"
-                        );
-                      } else {
-                        setError(`processRows.${index}.durasi`, {
-                          type: "manual",
-                          message: "Format salah! Gunakan HH:mm",
-                        });
-                      }
-                    }}
-                  />
-                </div>
-              )}
-            />
-          </div>
-        )})}
+              <label className="block mb-1">Durasi (HH:mm)</label>
+              <Controller
+                control={control}
+                name={`processRows.${index}.durasi` as const}
+                render={({ field }) => (
+                  <div className="relative">
+                    <div className="absolute inset-y-0 end-0 top-0 flex items-center pe-3.5 pointer-events-none">
+                      <IoTime />
+                    </div>
+                    <input
+                      type="text"
+                      {...field}
+                      value={field.value || ""}
+                      className="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-emerald-500 dark:focus:border-emerald-500"
+                      required
+                      // disabled={processName.toLowerCase() === "istirahat"}
+                      onFocus={() => {
+                        previousTime.current = field.value || "";
+                      }}
+                      onChange={(e) => {
+                        const formatted = formatTime(e.target.value);
+                        field.onChange(formatted);
+                        const regex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+                        if (regex.test(formatted)) {
+                          clearErrors(`processRows.${index}.durasi`);
+                          setValue(`processRows.${index}.durasi`, formatted);
+
+                          handleDurasiChange(
+                            index,
+                            formatted,
+                            previousTime.current || "00:00"
+                          );
+                        } else {
+                          setError(`processRows.${index}.durasi`, {
+                            type: "manual",
+                            message: "Format salah! Gunakan HH:mm",
+                          });
+                        }
+                      }}
+                      data-id={field.name}
+                      onKeyDown={handleCustomTab}
+                    />
+                  </div>
+                )}
+              />
+            </div>
+          );
+        })}
       </div>
 
       <div className="w-full flex justify-items-center ">
