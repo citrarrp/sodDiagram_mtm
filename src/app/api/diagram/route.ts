@@ -16,6 +16,7 @@ export async function GET() {
   }
 }
 
+
 export async function DELETE(req: NextRequest) {
   try {
     const customer = req.nextUrl.searchParams.get("customer");

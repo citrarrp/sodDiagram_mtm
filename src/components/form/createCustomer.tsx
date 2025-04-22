@@ -168,9 +168,9 @@ const CreateForm = ({
           wrappingDuration;
 
         if (wrappingTime < 0) {
-          wrappingTime += 1440
-        
-          wrappingTime %= 1440
+          wrappingTime += 1440;
+
+          wrappingTime %= 1440;
         }
         setValue(
           `processRows.${wrappingIndex}.waktu`,
@@ -201,21 +201,25 @@ const CreateForm = ({
 
       if (isValid(pullingDuration)) {
         if (tipe === "durasi") {
-         if (isValid( parseTimetonumber(processRows[wrappingIndex].waktu)))
+          if (isValid(parseTimetonumber(processRows[wrappingIndex].waktu)))
             setValue(
               `processRows.${pullingIndex}.durasi`,
               processRows[pullingIndex].durasi
             );
           setValue(
             `processRows.${pullingIndex}.waktu`,
-            formatDuration((
+            formatDuration(
               parseTimetonumber(processRows[wrappingIndex].waktu) -
-                pullingDuration) < 0 ?  (parseTimetonumber(processRows[wrappingIndex].waktu) -
-                pullingDuration + 1440) % 1440 :  parseTimetonumber(processRows[wrappingIndex].waktu) -
-                pullingDuration
+                pullingDuration <
+                0
+                ? (parseTimetonumber(processRows[wrappingIndex].waktu) -
+                    pullingDuration +
+                    1440) %
+                    1440
+                : parseTimetonumber(processRows[wrappingIndex].waktu) -
+                    pullingDuration
             )
           );
-        
         } else if (tipe === "waktu") {
           setValue(
             `processRows.${pullingIndex}.waktu`,
@@ -263,7 +267,7 @@ const CreateForm = ({
 
           if (newWaitingTime < 0) {
             newWaitingTime += 1440;
-           newWaitingTime %= 1440;
+            newWaitingTime %= 1440;
           }
           setValue(
             `processRows.${waitingIndex}.durasi`,

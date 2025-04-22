@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "../styles/globals.css";
 import { Toaster } from "sonner";
 import { Poppins } from "next/font/google";
+// import SearchProvider from "@/lib/Searchprovider";
+// import PaginationProvider from "@/lib/paginationProvider";
 const poppins = Poppins({
   subsets: ["latin"],
   display: "swap",
@@ -25,7 +27,11 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} font-[family-name:var(--poppins-font)] antialiased min-h-screen flex flex-col`}
       >
-        {children}
+        {/* <PaginationProvider>
+        <SearchProvider> */}
+          {children}
+          {/* </SearchProvider>
+        </PaginationProvider> */}
         <Toaster position="top-right" richColors />
       </body>
     </html>
