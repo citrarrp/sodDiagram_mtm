@@ -23,11 +23,11 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ message: "User registered", user: newUser });
+    return NextResponse.json({ message: "User berhasil didaftarkan!", user: newUser });
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { error: "Error registering user" },
+      { error: "Username tersebut telah ada!" },
       { status: 500 }
     );
   }

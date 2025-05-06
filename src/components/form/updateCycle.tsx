@@ -28,6 +28,7 @@ type sod = {
   waktu: string;
   durasi: string;
   processName: string;
+  updateMonth: string;
 };
 
 interface FormValues {
@@ -134,10 +135,14 @@ const UpdateForm = ({
 
       const result = await res.json();
       if (res.status === 200) {
+        router.refresh()
         showToast("success", "Data berhasil diperbarui!");
-        router.push("/dashboard");
+        router.replace("/dashboard");
       } else {
-        showToast("failed", `Terjadi kesalahan saat memperbarui data:: ${result.message}`);
+        showToast(
+          "failed",
+          `Terjadi kesalahan saat memperbarui data:: ${result.message}`
+        );
       }
     } catch (err) {
       showToast("failed", `Terjadi kesalahan saat memperbarui data: ${err}`);
@@ -219,6 +224,29 @@ const UpdateForm = ({
     const pullingIndex = processRows.findIndex((row) =>
       row.processName.toLowerCase().includes("pulling")
     );
+
+    if (index == loadingIndex) {
+      const loadingduration = parseTimetonumber(
+        processRows[loadingIndex].durasi ?? ""
+      );
+      setValue(
+        `processRows.${loadingIndex}.durasi`,
+        formatDuration(loadingduration)
+      );
+
+      let loadingTime =
+        parseTimetonumber(processRows[loadingIndex].waktu ?? "") -
+        loadingduration;
+
+      if (loadingTime < 0) loadingTime += 1440;
+      else if (loadingTime > 1440) loadingTime %= 1440;
+
+      setValue(
+        `processRows.${loadingIndex}.waktu`,
+        formatDuration(loadingTime)
+      );
+    }
+
     if (
       loadingIndex !== -1 &&
       waitingIndex >= 0 &&
@@ -593,7 +621,6 @@ const UpdateForm = ({
                       value={field.value || ""}
                       className="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-emerald-500 dark:focus:border-emerald-500"
                       required
-                      // disabled={processName.toLowerCase() === "istirahat"}
                       onFocus={() => {
                         previousTime.current = field.value || "";
                       }}

@@ -22,6 +22,7 @@ export async function PUT(req: NextRequest) {
 
     const { customerName, cycle, updates } = body;
 
+    const date = new Date();
     const existingData = await prisma.soddiagram.findMany({
       where: {
         customerName: customerName,
@@ -32,7 +33,6 @@ export async function PUT(req: NextRequest) {
     if (existingData.length === 0) {
       return res.json({ message: "No matching data found" }, { status: 404 });
     }
-
     const updatePromises = updates.map((row) =>
       prisma.soddiagram.update({
         where: { id: row.id },
@@ -44,16 +44,20 @@ export async function PUT(req: NextRequest) {
           durasi: row.durasi
             ? new Date(`1970-01-01T${row.durasi}Z`).toISOString()
             : null,
+          updateMonth: date.toLocaleString("default", { month: "long" }),
         },
       })
     );
 
     await Promise.all(updatePromises);
 
-    return res.json({ message: "Data updated successfully" }, { status: 200 });
+    return res.json({ message: "Data berhasil diperbarui!" }, { status: 200 });
   } catch (error) {
     console.error("Error updating data:", error);
-    return res.json({ message: "Internal server error" }, { status: 500 });
+    return res.json(
+      { message: "Terjadi kesalahan saat memperbarui data!" },
+      { status: 500 }
+    );
   }
 }
 
@@ -63,9 +67,14 @@ export async function DELETE(req: NextRequest) {
     const cycle = req.nextUrl.searchParams.get("cycle") || "";
 
     if (!customer || !cycle) {
-      return new Response(JSON.stringify({ message: "Missing parameters" }), {
-        status: 400,
-      });
+      return new Response(
+        JSON.stringify({
+          message: "Data customer atau cycle tidak diketahui!",
+        }),
+        {
+          status: 400,
+        }
+      );
     }
 
     const deletedData = await prisma.soddiagram.deleteMany({
@@ -81,10 +90,9 @@ export async function DELETE(req: NextRequest) {
         { status: 404 }
       );
     }
-    return new Response(
-      JSON.stringify({ message: "Data deleted successfully" }),
-      { status: 200 }
-    );
+    return new Response(JSON.stringify({ message: "Data berhasil dihapus" }), {
+      status: 200,
+    });
   } catch (error) {
     console.error("Error deleting data:", error);
     return new Response(JSON.stringify({ message: "Internal Server Error" }), {
@@ -111,8 +119,8 @@ export async function GET(
       },
     });
 
-    if (!sodDiagram) {
-      return res.json({ status: 404, message: "Data Not Found" });
+    if (!sodDiagram || sodDiagram.length === 0 || sodDiagram == undefined) {
+      return res.json({ message: "Data tidak ditemukan!" }, { status: 404 });
     }
 
     return res.json({
@@ -123,7 +131,7 @@ export async function GET(
   } catch (err) {
     console.error("Error fetching data: ", err);
     return res.json(
-      { status: 500, message: "Internal Server Error" },
+      { message: "Terjadi kesalahan saat mengambil data!" },
       { status: 500 }
     );
   }

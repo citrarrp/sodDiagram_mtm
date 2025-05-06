@@ -4,14 +4,10 @@ import { useRouter } from "next/navigation";
 import { useToast } from "./toast";
 import { MdDelete } from "react-icons/md";
 
-export default function DeleteButton({
-  customer,
-  cycle,
-  onDelete,
+export default function DeleteUser({
+  id
 }: {
-  customer: string;
-  cycle: number;
-  onDelete?: (customer: string, cycle: number) => void;
+  id: number;
 }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -21,7 +17,7 @@ export default function DeleteButton({
 
     try {
       const response = await fetch(
-        `/api/diagram?customer=${encodeURIComponent(customer)}&cycle=${cycle}`,
+        `/api/user?id=${id}`,
         {
           method: "DELETE",
         }
@@ -30,13 +26,10 @@ export default function DeleteButton({
       const data = await response.json();
       if (response.ok) {
         router.refresh();
+
         showToast("success", "Data berhasil dihapus!");
-        onDelete?.(customer, cycle);
       } else {
-        showToast(
-          "failed",
-          `Terjadi kesalahan saat menghapus data: ${data.message}`
-        );
+        showToast("failed", `Terjadi kesalahan saat menghapus data: ${data.message}`);
       }
     } catch (error) {
       showToast("failed", `${error}`);
@@ -51,7 +44,7 @@ export default function DeleteButton({
         type="button"
         onClick={handleDelete}
         disabled={loading}
-        className="px-2 py-1 cursor-pointer bg-red-500 hover:bg-red-600 text-white rounded my-1 flex items-center gap-1.5"
+        className="px-4 py-2 select-none cursor-pointer bg-slate-800 shadow-md shadow-slate-900/10 transition-all hover:shadow-lg hover:shadow-slate-900/20 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none text-white rounded my-1 flex items-center gap-1.5"
       >
         <MdDelete />
         {loading ? "Deleting..." : "Delete"}

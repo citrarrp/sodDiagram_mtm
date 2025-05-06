@@ -22,7 +22,7 @@ const CustomerAccordion = ({
         className="border shadow-xl rounded-lg p-7 text-left cursor-pointer font-bold text-xl flex justify-between items-center w-full"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {customer}
+        {customer.toUpperCase()}
         <span>{isOpen ? <FaCaretUp /> : <FaCaretDown />}</span>
       </button>
 

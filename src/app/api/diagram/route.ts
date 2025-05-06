@@ -8,14 +8,16 @@ export async function GET() {
     if (soddiagrams.length > 0) {
       return res.json({ status: 200, success: true, data: soddiagrams });
     } else {
-      return res.json({ status: 400, message: "Data Not Found" });
+      return res.json({ status: 400, message: "Data tidak ditemukan!" });
     }
   } catch (err) {
     console.log(err);
-    return res.json({ status: 500, message: "Internal server error" });
+    return res.json({
+      status: 500,
+      message: "Terjadi kesalahan saat mengambil data!",
+    });
   }
 }
-
 
 export async function DELETE(req: NextRequest) {
   try {
@@ -23,9 +25,12 @@ export async function DELETE(req: NextRequest) {
     const cycle = req.nextUrl.searchParams.get("cycle") || "";
 
     if (!customer || !cycle) {
-      return new Response(JSON.stringify({ message: "Missing parameters" }), {
-        status: 400,
-      });
+      return res.json(
+        { message: "Tidak diketahui" },
+        {
+          status: 400,
+        }
+      );
     }
 
     const deletedData = await prisma.soddiagram.deleteMany({
@@ -36,19 +41,16 @@ export async function DELETE(req: NextRequest) {
     });
 
     if (deletedData.count === 0) {
-      return new Response(
-        JSON.stringify({ message: "No matching data found" }),
-        { status: 404 }
-      );
+      return res.json({ message: "No matching data found" }, { status: 404 });
     }
-    return new Response(
-      JSON.stringify({ message: "Data deleted successfully" }),
-      { status: 200 }
-    );
+    return res.json({ message: "Data berhasil dihapus!" }, { status: 200 });
   } catch (error) {
     console.error("Error deleting data:", error);
-    return new Response(JSON.stringify({ message: "Internal Server Error" }), {
-      status: 500,
-    });
+    return res.json(
+      { message: "Terjadi kesalahan saat menghapus data!" },
+      {
+        status: 500,
+      }
+    );
   }
 }

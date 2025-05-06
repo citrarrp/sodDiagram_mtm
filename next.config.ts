@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    webpackMemoryOptimizations: true
+  }
 
 };
 

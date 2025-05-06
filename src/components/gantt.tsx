@@ -7,6 +7,7 @@ type Data = {
   cycle: string;
   waktu: string;
   durasi: string;
+  updateMonth: string;
 };
 type task = {
   processName: string;
@@ -17,6 +18,7 @@ type cycleProcess = {
   customerName: string;
   cycle: number;
   process: task[];
+  updateMonth: string;
 };
 
 export function SOD(data: Data[]) {
@@ -83,6 +85,7 @@ export function SOD(data: Data[]) {
           customerName: customerName as string,
           cycle: cycle as number,
           process: Tasks,
+          updateMonth: Items[0].updateMonth
         })
       );
     });

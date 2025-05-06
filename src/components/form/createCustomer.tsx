@@ -26,6 +26,7 @@ type sod = {
   waktu: string;
   durasi: string;
   processName: string;
+  updateMonth: string;
 };
 
 interface FormValues {
@@ -112,8 +113,9 @@ const CreateForm = ({
         body: JSON.stringify(payload),
       });
       if (response.ok) {
+        router.refresh()
         showToast("success", "Data berhasil disimpan!");
-        router.push("/dashboard");
+        router.replace("/dashboard");
       } else {
         showToast("failed", "Terjadi kesalahan saat menyimpan data.");
       }
@@ -176,19 +178,6 @@ const CreateForm = ({
           `processRows.${wrappingIndex}.waktu`,
           formatDuration(wrappingTime)
         );
-        // let newWaitingTime =
-        //   loadingTime -
-        //   (wrappingTime + wrappingDuration > 1440
-        //     ? (wrappingTime + wrappingDuration + 1440) % 1440
-        //     : wrappingTime + wrappingDuration);
-
-        // if (newWaitingTime < 0) newWaitingTime += 1440;
-        // else if (newWaitingTime > 1440) newWaitingTime %= 1440;
-
-        // setValue(
-        //   `processRows.${waitingIndex}.durasi`,
-        //   formatDuration(newWaitingTime)
-        // );
       }
     }
 
@@ -316,15 +305,6 @@ const CreateForm = ({
           );
         }
       }
-      // else if (processRows[i].durasi && processRows[i + 1].waktu && i < processRows.length - 2) {
-      //   const prevDuration = parseTimetonumber(processRows[index].durasi ?? "");
-      // if (prevDuration) {
-      //   let prevTime = parseTimetonumber(processRows[index - 1]?.waktu ?? "");
-      //   prevTime -= prevDuration;
-      //   if (prevTime < 0) prevTime += 1440;
-      //   setValue(`processRows.${index - 1}.waktu`, formatDuration(prevTime));
-      // }
-      // }
     }
 
     if (index < 2 && index <= processRows.length - 3 && index != -1) {
@@ -442,7 +422,6 @@ const CreateForm = ({
                                 processName.toLowerCase() ===
                                   "waiting shipping area"
                               }
-                              // autoFocus={index === autoFocus()}
                               className="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-emerald-500 dark:focus:border-emerald-500"
                               onChange={(e) => {
                                 const formatted = formatTime(e.target.value);

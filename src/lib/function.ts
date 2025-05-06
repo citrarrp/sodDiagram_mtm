@@ -23,6 +23,19 @@ export async function getCycle(customerName: string, cycle: string) {
     }
   );
 
+  if (!res.ok) return undefined;
+
+  const data = await res.json();
+  return data;
+}
+
+export async function getUsers() {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/user`, {
+    next: { revalidate: 0 },
+  });
+
+  if (!res.ok) return undefined;
+
   const data = await res.json();
   return data;
 }
@@ -71,7 +84,7 @@ export async function getSOD() {
 
   // if (isProduction) {
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/sod`, {
-    next: { revalidate: 0 },
+    next: { revalidate: 3600 },
   });
 
   return res.json();
@@ -94,11 +107,25 @@ export async function getBreaks() {
   // const isProduction = process.env.NODE_ENV === "production";
 
   // if (isProduction) {
-  console.log(process.env.NEXT_PUBLIC_BASE_URL, "VASE");
   const res2 = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/break/`, {
     next: { revalidate: 0 },
   });
   const breaks = await res2.json();
   return breaks;
   // }
+}
+
+type user = {
+  username: string;
+  password: string;
+};
+
+export default function decodeJWT(token: string): user | null {
+  try {
+    const payload = token.split(".")[1];
+    const decoded = JSON.parse(atob(payload));
+    return decoded;
+  } catch {
+    return null;
+  }
 }

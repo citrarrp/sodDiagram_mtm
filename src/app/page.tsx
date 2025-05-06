@@ -2,9 +2,8 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getCookie } from "cookies-next";
-import "../styles/globals.css"
-// export const runtime = "edge";
-// export const dynamic = "force-dynamic";
+import "../styles/globals.css";
+
 export default function Home() {
   const router = useRouter();
   useEffect(() => {

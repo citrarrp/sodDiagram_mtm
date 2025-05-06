@@ -18,6 +18,7 @@ interface UpdatePayload {
 export async function POST(req: NextRequest) {
   const body: UpdatePayload = await req.json();
   const { customerName, cycle, updates }: UpdatePayload = body;
+  const date = new Date();
   const cleanedUpdates = updates.map((row) => ({
     ...row,
     waktu: row.waktu === "" ? null : row.waktu,
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
         durasi: row.durasi
           ? new Date(`1970-01-01T${row.durasi}Z`).toISOString()
           : null,
+        updateMonth: date.toLocaleString('default', { month: 'long' })
       };
     });
 
@@ -48,26 +50,12 @@ export async function POST(req: NextRequest) {
       data: dataToInsert,
     });
 
-    return res.json({ message: "Data saved successfully!" }, { status: 200 });
+    return res.json({ message: "Data berhasil disimpan!" }, { status: 200 });
   } catch (err) {
     console.error(err);
-    return res.json({ error: "Failed to save data" }, { status: 500 });
+    return res.json({ error: "Terjadi kesalahan saat menyimpan data!" }, { status: 500 });
   }
 }
-
-// export async function GET() {
-//   try {
-//     const soddiagrams = await prisma.soddiagram.findMany();
-//     if (soddiagrams.length > 0) {
-//       return res.json({ status: 200, success: true, data: soddiagrams });
-//     } else {
-//       return res.json({ status: 400, message: "Data Not Found" });
-//     }
-//   } catch (err) {
-//     console.log(err);
-//     return res.json({ status: 500, message: "Internal server error" });
-//   }
-// }
 
 export async function GET(req: NextRequest) {
   try {
@@ -79,69 +67,48 @@ export async function GET(req: NextRequest) {
     if (isNaN(page) || page < 1) page = 1;
     if (isNaN(limit) || limit < 1) limit = 100;
 
-    // const skip = (page - 1) * limit;
-
-    // const whereClause = search
-    //   ? {
-    //       customerName: {
-    //         contains: search.toLowerCase(),
-    //       },
-    //     }
-    //   : {};
-
-    // const [total, data] = await Promise.all([
-    //   prisma.soddiagram.count({ where: whereClause }),
-    //   prisma.soddiagram.findMany({
-    //     where: whereClause,
-    //     skip: skip,
-    //     take: limit,
-    //   }),
-    // ]);
-
-    // const totalPages = Math.ceil(total / limit);
-
-const [uniqueTotal, uniqueCustomers] = await Promise.all([
-  prisma.soddiagram.findMany({
-    where: search
-      ? {
-          customerName: {
-            contains: search.toLowerCase(),
-          },
-        }
-      : {},
-    select: {
-      customerName: true,
-    },
-    distinct: ["customerName"],
-  }),
-  prisma.soddiagram.findMany({
-  where: search
-    ? {
-        customerName: {
-          contains: search.toLowerCase(),
+    const [uniqueTotal, uniqueCustomers] = await Promise.all([
+      prisma.soddiagram.findMany({
+        where: search
+          ? {
+              customerName: {
+                contains: search.toLowerCase(),
+              },
+            }
+          : {},
+        select: {
+          customerName: true,
         },
-      }
-    : {},
-  select: {
-    customerName: true,
-  },
-  distinct: ["customerName"],
-  take: limit,
-  skip: (page - 1) * limit, 
-})
-]);
+        distinct: ["customerName"],
+      }),
+      prisma.soddiagram.findMany({
+        where: search
+          ? {
+              customerName: {
+                contains: search.toLowerCase(),
+              },
+            }
+          : {},
+        select: {
+          customerName: true,
+        },
+        distinct: ["customerName"],
+        take: limit,
+        skip: (page - 1) * limit,
+      }),
+    ]);
 
-const customerNames = uniqueCustomers.map((item) => item.customerName);
-const data = await prisma.soddiagram.findMany({
-  where: {
-    customerName: {
-      in: customerNames,
-    },
-  },
-});
-const uniqueCustomerName = uniqueTotal.map((item) => item.customerName);
-const totalUniqueCustomer = customerNames.length;
-const totalPages = Math.ceil(uniqueCustomerName.length / limit);
+    const customerNames = uniqueCustomers.map((item) => item.customerName);
+    const data = await prisma.soddiagram.findMany({
+      where: {
+        customerName: {
+          in: customerNames,
+        },
+      },
+    });
+    const uniqueCustomerName = uniqueTotal.map((item) => item.customerName);
+    const totalUniqueCustomer = customerNames.length;
+    const totalPages = Math.ceil(uniqueCustomerName.length / limit);
 
     return new Response(
       JSON.stringify({
@@ -156,7 +123,7 @@ const totalPages = Math.ceil(uniqueCustomerName.length / limit);
   } catch (err) {
     console.error(err);
     return new Response(
-      JSON.stringify({ success: false, message: "Server Error" }),
+      JSON.stringify({ success: false, message: "Terjadi kesalahan saat mengambil data" }),
       { status: 500 }
     );
   }

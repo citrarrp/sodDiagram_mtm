@@ -21,7 +21,7 @@ import {
   NameType,
   ValueType,
 } from "recharts/types/component/DefaultTooltipContent";
-import { FaSquareFull } from "react-icons/fa";
+import { MdRectangle } from "react-icons/md";
 import { getColor } from "@/app/utils/color";
 
 type task = {
@@ -34,6 +34,7 @@ type cycleProcess = {
   customerName: string;
   cycle: number;
   process: task[];
+  updateMonth: string;
 };
 
 type Break = {
@@ -57,6 +58,7 @@ type SOD = {
   cycle: string;
   waktu: string;
   durasi: string;
+  updateMonth: string;
 };
 
 const GanttChart = ({
@@ -327,19 +329,21 @@ const GanttChart = ({
     .sort((a, b) => a.cycle - b.cycle);
   const RenderLegend = (props: LegendProps) => {
     const { payload } = props;
-
     return (
-      <div className="flex justify-center text-xs text-center">
+      <div className="flex flex-wrap justify-center items-center w-full text-xs text-center gap-2">
         {payload?.map((entry, index) => (
-          <div key={index}>
-            <FaSquareFull
-              className="mx-2 items-center justify-center"
-              size={10}
+          <div key={index} className="relative w-12">
+            <MdRectangle
+              className="h-full w-full"
+              size={12}
               color={getColor(index)}
             />
-            <span className="mx-2" key={`item-${index}`}>
+            <div
+              className="absolute inset-0 w-full flex items-center justify-center whitespace-nowrap text-white text-[9px] p-1"
+              key={`item-${index}`}
+            >
               {entry.value}
-            </span>
+            </div>
           </div>
         ))}
       </div>
@@ -354,7 +358,7 @@ const GanttChart = ({
     >
       <ResponsiveContainer
         width={"100%"}
-        height={450}
+        height={467}
         minWidth={400}
         minHeight={300}
       >

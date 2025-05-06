@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "../styles/globals.css";
 import { Toaster } from "sonner";
 import { Poppins } from "next/font/google";
-// import SearchProvider from "@/lib/Searchprovider";
-// import PaginationProvider from "@/lib/paginationProvider";
+import { AuthProvider } from "./context/useAuth";
+
 const poppins = Poppins({
   subsets: ["latin"],
   display: "swap",
@@ -13,7 +13,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "SOD Diagram PT Menara Terus Makmur",
+  title: "SOD PT Menara Terus Makmur",
   description: "Delivery & Finishing Good",
 };
 
@@ -27,11 +27,9 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} font-[family-name:var(--poppins-font)] antialiased min-h-screen flex flex-col`}
       >
-        {/* <PaginationProvider>
-        <SearchProvider> */}
+        <AuthProvider>
           {children}
-          {/* </SearchProvider>
-        </PaginationProvider> */}
+          </AuthProvider>
         <Toaster position="top-right" richColors />
       </body>
     </html>

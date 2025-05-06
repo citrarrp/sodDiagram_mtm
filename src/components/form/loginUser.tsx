@@ -36,27 +36,27 @@ const LoginForm = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        showToast("failed", result.error || "Login gagal!");
+        showToast("failed", result.error || "Terjadi kesalahan saat login!");
         return;
       }
 
-      showToast("success", "Login Berhasil!");
+      showToast("success", result.message);
 
       setTimeout(() => {
-        router.push("/dashboard");
+        router.replace("/dashboard");
       }, 1000);
     } catch (error) {
-      showToast("failed", `Terjadi kesalahan saat login: ${error}`);
+      showToast("failed", `${error}`);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-emerald-400/60 to-emerald-500">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-emerald-400/60 to-emerald-500">
       <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-2xl">
-        <h2 className="text-3xl font-bold text-center text-gray-800">
-          SOD Diagram
+        <h2 className="text-2xl font-bold text-center text-gray-800">
+          SHIPPING OPERATION DIAGRAM
         </h2>
         <p className="text-center text-sm text-gray-500 mb-4">
           Silahkan login ke akun yang telah terdaftar
@@ -86,6 +86,15 @@ const LoginForm = () => {
             {isLoading ? "Loading..." : "Login"}
           </Button>
         </form>
+      </div>
+      <div className="w-full mx-auto flex max-w-md text-center my-10">
+        <Button
+          type="button"
+          onClick={() => router.replace("/display")}
+          classes="bg-white text-emerald-500 hover:text-white"
+        >
+          Lihat Display
+        </Button>
       </div>
     </div>
   );

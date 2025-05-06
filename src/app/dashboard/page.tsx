@@ -19,6 +19,12 @@ import { IoMdAddCircleOutline } from "react-icons/io";
 import GeneratePDF from "@/components/generatePDF";
 import { IoMdSearch } from "react-icons/io";
 import { useDebouncedCallback } from "use-debounce";
+import LogoutButton from "@/components/logoutButton";
+import { useAuth } from "../context/useAuth";
+import { FaUserPlus } from "react-icons/fa";
+import { useRouter } from "next/navigation";
+import Button from "@/components/Button";
+
 type task = {
   processName: string;
   waktuStart: number;
@@ -28,11 +34,13 @@ type cycleProcess = {
   customerName: string;
   cycle: number;
   process: task[];
+  updateMonth: string;
 };
 
 type groupedCust = {
   customerName: string;
   cycles: cycleProcess[];
+  updateMonth: string;
 };
 
 type Shift = {
@@ -69,6 +77,7 @@ type SOD = {
   cycle: string;
   waktu: string;
   durasi: string;
+  updateMonth: string;
 };
 
 type SODResponse = {
@@ -113,14 +122,14 @@ type DiagramResponse = {
 const generateColor = (index: number): string => {
   const colors = [
     "#FF69B4", // Hot Pink
-    "#FF6F91", // Coral Pink
-    "#DA70D6", // Orchid
-    "#FFA07A", // Salmon
-    "#00FFFF", // Light Cyan
-    "#40E0D0", // Turquoise
-    "#BFFF00", // Neon Lime
-    "#cd4500", // Neon Orange
-    "#E6E6FA", // Lavender
+    "#FF6F91", // Coral Pink (gelap)
+    "#993365", // ungu gelap
+    "#e36c0b", // Salmon ORANGE
+    "#00FFFF", // Light Cyan BIRU TERANG
+    "#40E0D0", // Turquoise HIJAU TOSCA
+    "#3F6212", // hijau gelap
+    "#FFC300", // Neon Orange
+    "#0000fe", // Lavender UNGU TERANG pastel
   ];
   return colors[index % colors.length];
 };
@@ -193,6 +202,8 @@ const createUniqueProcessCyclePerCustomer = (
 };
 
 export default function Page() {
+  const { isAdmin, setIsAdmin } = useAuth();
+  const router = useRouter();
   const [sod, setDataSOD] = useState<SODResponse>();
   const [filteredSOD, setfilteredSOD] = useState<SODResponse>();
   const [searchData, setSearchData] = useState<string>("");
@@ -203,40 +214,30 @@ export default function Page() {
   const [breaks, setBreaks] = useState<BreakResponse>();
   const [diagram, setDiagram] = useState<DiagramResponse>();
 
-  // const fetchFiltered = useCallback(async () => {
-  //   try {
-  // const [sodRes, shiftRes, breakRes] = await Promise.all([
-  //   getSOD(searchValue, currentPage, controllerRef.current?.signal),
-  //   getShifts(),
-  //   getBreaks(),
-  // ]);
-
-  //     setDataSOD(sodRes);
-  //     setTotalPages(sodRes.totalPages);
-  //     setShifts(shiftRes);
-  //     setBreaks(breakRes);
-  //     setLoading(false);
-  //   } catch (error) {
-  //     console.error("Failed fetching filtered data", error);
-  //     return null;
-  //   }
-  // }, [searchValue, currentPage]);
-
   const onPageChange = (page: number) => {
     setCurrentPage(page);
     setSearchData("");
   };
 
   const controllerRef = useRef<AbortController>(null);
-
   useEffect(() => {
+    const fetchUser = async () => {
+      const res = await fetch("/api/me", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        const isAdmin = (data.user?.username || "").includes("admin");
+        setIsAdmin(isAdmin);
+      } else {
+        router.replace("/login");
+      }
+    };
+
+    fetchUser();
+
     const controller = new AbortController();
     controllerRef.current = controller;
-
-    // const delayDebounce = setTimeout(() => {
     const fetchFiltered = async () => {
       setLoading(true);
-      // fetchFiltered();
       try {
         const [sodRes, shiftRes, breakRes, diagramRes] = await Promise.all([
           getDataSOD(currentPage, 5, controllerRef.current?.signal),
@@ -259,54 +260,25 @@ export default function Page() {
       }
     };
     fetchFiltered();
-  }, [currentPage]);
+  }, [currentPage, router, setIsAdmin]);
 
-  // fetch(
-  //   `${process.env.BASE_URL}/api/data?search=${encodeURIComponent(
-  //     searchValue
-  //   )}&page=${currentPage}&limit=100`,
-  //   { signal: controller.signal }
-  // )
-  //   .then((res) => {
-  //     if (!res.ok) throw new Error("Network response was not ok");
-  //     return res.json();
-  //   })
-  //   .then((json) => {
-  //     setDataSOD(json.data);
-  //     setTotalPages(json.totalPages);
-  //     setLoading(false);
-  //   })
-  //   .catch((err) => {
-  //     if (err.name !== "AbortError") {
-  //       console.error("Fetch error:", err);
-  //       setLoading(false);
-  //     }
-  //   });
+  const handleClientAction = (customer: string, cycle: number) => {
+    if (!filteredSOD || !filteredSOD.data) return;
 
-  //   const fetchFiltered = useCallback(async () => {
-  //     const retrieveSODresponse: SODResponse = await getSODData(searchData, controllerRef.current?.signal)
+    const updatedData = filteredSOD.data.filter(
+      (item) =>
+        !(
+          item.customerName === customer && Number(item.cycle) === Number(cycle)
+        )
+    );
 
-  //   if (!retrieveSODresponse.success) {
-  //     setfilteredSOD(sod)
-  //     setLoading(false)
-  //     return;
-  //   }
-  //   if(retrieveSODresponse.data) {
-  //     setfilteredSOD(retrieveSODresponse)
-  //     setLoading(false);
-  //   }
-  // })
+    const updatedSOD: SODResponse = {
+      ...filteredSOD,
+      data: updatedData,
+    };
 
-  //   const debounce = setTimeout(() => {
-  //     setLoading(true)
-  // if (searchData.trim() !== "") {
-  //   fetchFiltered();
-  // }
-  //   }, 1000);
-
-  //   return () => clearTimeout(debounce);
-  //     controller.abort();
-  // }, [search, fetchFiltered]);
+    setfilteredSOD(updatedSOD);
+  };
 
   const searchCustomer = useDebouncedCallback(async () => {
     setLoading(true);
@@ -329,8 +301,12 @@ export default function Page() {
         setLoading(false);
       }
     } else {
-      setfilteredSOD(sod);
+      if (sod) {
+        setfilteredSOD(sod);
+        setTotalPages(sod.totalPages);
+      }
       setLoading(false);
+      return;
     }
   }, 1000);
 
@@ -338,27 +314,7 @@ export default function Page() {
     setSearchData(value);
     searchCustomer();
   };
-
-  // const sod = await getSOD();
-  // const hasil = SOD(sod?.data || []);
-  // const data: ShiftResponse = await getShifts();
-  // const breaks = await getBreaks();
   const hasil = useMemo(() => SOD(filteredSOD?.data || []), [filteredSOD]);
-
-  // const grouped: groupedCust[] = (hasil || []).reduce((acc, item) => {
-  //   const exist = acc.find((cust) => cust.customerName === item.customerName);
-
-  //   if (exist) {
-  //     exist.cycles.push(item);
-  //   } else {
-  //     acc.push({
-  //       customerName: item.customerName,
-  //       cycles: [item],
-  //     });
-  //   }
-  //   return acc;
-  // }, [] as groupedCust[]);
-
   const grouped = useMemo(() => {
     return (hasil || []).reduce((acc: groupedCust[], item: cycleProcess) => {
       const existing = acc.find(
@@ -367,21 +323,15 @@ export default function Page() {
       if (existing) {
         existing.cycles.push(item);
       } else {
-        acc.push({ customerName: item.customerName, cycles: [item] });
+        acc.push({
+          customerName: item.customerName,
+          cycles: [item],
+          updateMonth: item.updateMonth,
+        });
       }
       return acc;
     }, []);
   }, [hasil]);
-
-  // const allCycles = grouped.flatMap((customer) =>
-  //   customer.cycles.map((cycle, index) => {
-  //     return {
-  //       customer: customer.customerName,
-  //       cycle: cycle.cycle,
-  //       color: getColor(index),
-  //     };
-  //   })
-  // );
 
   const allCycles = useMemo(() => {
     return grouped.flatMap((customer) =>
@@ -392,27 +342,6 @@ export default function Page() {
       }))
     );
   }, [grouped]);
-
-  // const lineResult = grouped.map((customer) => {
-  //   const groupedProcesses: Record<string, string[]> = {};
-  //   customer.cycles
-  //     .sort((a, b) => a.cycle - b.cycle)
-  //     .map((cycle, index) => {
-  //       cycle.process.forEach((proc) => {
-  //         if (!groupedProcesses[proc.processName]) {
-  //           groupedProcesses[proc.processName] = [];
-  //         }
-  //         groupedProcesses[proc.processName].push(
-  //           `${proc.processName}_${index}`
-  //         );
-  //       });
-  //     });
-
-  //   return {
-  //     customerName: customer.customerName,
-  //     processes: Object.values(groupedProcesses).flat(),
-  //   };
-  // });
 
   const lineResult = useMemo(() => {
     return grouped.map((customer) => {
@@ -441,16 +370,48 @@ export default function Page() {
     () => createUniqueProcessCyclePerCustomer(grouped),
     [grouped]
   );
-  // const uniqueProcessPerCustomer = createUniqueProcessCyclePerCustomer(grouped);
+  const windowSize = 10;
+  const currentWindow = Math.floor((currentPage - 1) / windowSize);
+  const start = currentWindow * windowSize + 1;
+  const end = Math.min(start + windowSize - 1, totalPages);
+
+  const handlePrev = () => {
+    const newStart = Math.max(start - windowSize, 1);
+    onPageChange(newStart);
+  };
+
+  const handleNext = () => {
+    const newStart = Math.min(start + windowSize, totalPages);
+    onPageChange(newStart);
+  };
 
   return (
     <div className="items-center justify-items-center p-6 sm:p-10 font-[family-name:var(--poppins-font)] max-w-screen min-h-screen w-full h-full growflex-1">
+      <div className="w-full flex justify-between mb-5">
+        <h1 className="font-semibold text-3xl text-emerald-600 border-b-2 h-[50px]">
+          SOD Menara Terus Makmur
+        </h1>
+        <div className="flex items-center gap-5">
+          {isAdmin && (
+            <Link href={`/register`}>
+              <button className="mb-7 cursor-pointer text-red-500">
+                <FaUserPlus size={30} />
+              </button>
+            </Link>
+          )}
+
+          <LogoutButton />
+        </div>
+      </div>
+      <div className="w-full mx-auto mb-10">
+        <Button type="button" onClick={() => router.replace("/display")}>
+          Lihat Display
+        </Button>
+      </div>
       {sod && data && breaks && diagram && (
         <main className="flex flex-col row-start-2 items-center sm:items-start w-full h-full min-h-screen overflow-hidden">
           <div className="flex justify-between items-center w-full mb-5 gap-4">
-            {/* <div className="justify-end w-full my-10 ml-auto flex"> */}
             <div className="relative w-3/4">
-             
               <input
                 type="text"
                 placeholder="Cari data..."
@@ -499,8 +460,8 @@ export default function Page() {
                           </h2>
                           <p className="mt-1 text-lg text-gray500 dark:text-white">
                             {searchData
-                              ? "No customer found."
-                              : "No data available."}
+                              ? "Tidak ada customer yang ditemukan!."
+                              : "Data tidak tersedia!."}
                           </p>
                         </div>
                       </div>
@@ -530,9 +491,14 @@ export default function Page() {
                           sodHeader={diagram}
                           data={sod}
                           Customer={customer.customerName}
+                          onDelete={handleClientAction}
                         />
 
-                        <GeneratePDF customer={customer.customerName}>
+                        <GeneratePDF
+                          customer={customer.customerName}
+                          updateMonth={customer.updateMonth}
+                          countCycle={customer.cycles.length}
+                        >
                           <div className="relative w-[1145px] pb-115 pt-5 border-1 border-black h-full">
                             <div className="w-full relative mb-10">
                               <Shifts data={data.data} />
@@ -568,19 +534,40 @@ export default function Page() {
               })
             )}
             <div className="flex justify-center items-center gap-2 mt-4">
-              {Array.from({ length: totalPages }, (_, idx) => (
+              {start > 1 && (
                 <button
-                  key={idx}
-                  className={`px-3 py-1 border rounded ${
-                    currentPage === idx + 1
-                      ? "bg-blue-700 text-white"
-                      : "bg-white"
-                  }`}
-                  onClick={() => onPageChange(idx + 1)}
+                  onClick={handlePrev}
+                  className="px-3 py-1 border rounded cursor-pointer bg-white"
                 >
-                  {idx + 1}
+                  &larr;
                 </button>
-              ))}
+              )}
+
+              {Array.from({ length: end - start + 1 }, (_, idx) => {
+                const pageNum = start + idx;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => onPageChange(pageNum)}
+                    className={`w-[30px] py-1 text-center border rounded cursor-pointer ${
+                      currentPage === pageNum
+                        ? "bg-blue-700 text-white"
+                        : "bg-white"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+
+              {end < totalPages && (
+                <button
+                  onClick={handleNext}
+                  className="px-3 py-1 border rounded cursor-pointer bg-white"
+                >
+                  &rarr;
+                </button>
+              )}
             </div>
           </div>
         </main>

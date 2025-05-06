@@ -7,10 +7,10 @@ export async function GET() {
     if (jadwal.length > 0) {
       return res.json({ status: 200, success: true, data: jadwal });
     } else {
-      return res.json({ status: 400, message: "Data Not Found" });
+      return res.json({ status: 400, message: "Data tidak ditemukan!" });
     }
   } catch (err) {
     console.log(err);
-    return res.json({ status: 500, message: "Internal server error" });
+    return res.json({ status: 500, message: "Terjadi kesalahaan saat mengambil data!" });
   }
 }

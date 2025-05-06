@@ -114,7 +114,7 @@ export default function BarChartSimple({ tasks }: BarChartSimpleProps) {
               pointerEvents: "none",
             }}
           >
-            <ResponsiveContainer height={374} minWidth={400} minHeight={300}>
+            <ResponsiveContainer height={367} minWidth={400} minHeight={300}>
               <BarChart
                 data={taskList}
                 layout="vertical"

@@ -2,7 +2,6 @@
 import Link from "next/link";
 import DeleteButton from "./deleteButton";
 import { MdEdit } from "react-icons/md";
-// import { getDiagram } from "@/lib/function";
 type DiagramSOD = {
   id: number;
   processName: string;
@@ -16,6 +15,7 @@ type SOD = {
   cycle: string;
   waktu: string;
   durasi: string;
+  updateMonth: string;
 };
 
 type SODProp = {
@@ -37,13 +37,13 @@ export default function SODDiagram({
   sodHeader,
   data,
   Customer,
+  onDelete
 }: {
   sodHeader: DiagramProp;
   data: SODProp;
   Customer: string;
+  onDelete?: (customer: string, cycle: number) => void;
 }) {
-  // const sodHeader: DiagramProp = await getDiagram();
-
   const uniqueProcessNames: string[] = Array.from(
     new Set(
       sodHeader.data
@@ -135,7 +135,7 @@ export default function SODDiagram({
                           className="border px-2 py-2 border-gray-400 font-medium text-gray-800 rounded-bl-lg"
                           rowSpan={Object.keys(cycles).length}
                         >
-                          {customerName}
+                          {customerName.toUpperCase()}
                         </td>
                       )}
 
@@ -236,6 +236,7 @@ export default function SODDiagram({
                         <DeleteButton
                           customer={customerName}
                           cycle={Number(cycle)}
+                          onDelete={() => onDelete?.(customerName, Number(cycle))}
                         />
                       </td>
                     </tr>
