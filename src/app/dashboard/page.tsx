@@ -23,7 +23,7 @@ import LogoutButton from "@/components/logoutButton";
 import { useAuth } from "../context/useAuth";
 import { FaUserPlus } from "react-icons/fa";
 import { useRouter } from "next/navigation";
-import Button from "@/components/Button";
+// import Button from "@/components/Button";
 
 type task = {
   processName: string;
@@ -403,11 +403,11 @@ export default function Page() {
           <LogoutButton />
         </div>
       </div>
-      <div className="w-full mx-auto mb-10">
+      {/* <div className="w-full mx-auto mb-10">
         <Button type="button" onClick={() => router.replace("/display")}>
           Lihat Display
         </Button>
-      </div>
+      </div> */}
       {sod && data && breaks && diagram && (
         <main className="flex flex-col row-start-2 items-center sm:items-start w-full h-full min-h-screen overflow-hidden">
           <div className="flex justify-between items-center w-full mb-5 gap-4">
