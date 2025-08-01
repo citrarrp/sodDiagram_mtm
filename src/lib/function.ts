@@ -3,7 +3,7 @@ export async function getShifts() {
 
   // if (isProduction) {
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/shift/`, {
-    next: { revalidate: 0 },
+    next: { revalidate: 3600 },
   });
 
   if (!res.ok) {
@@ -17,10 +17,7 @@ export async function getShifts() {
 
 export async function getCycle(customerName: string, cycle: string) {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/diagram/${customerName}-${cycle}`,
-    {
-      next: { revalidate: 0 },
-    }
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/diagram/${customerName}_${cycle}`
   );
 
   if (!res.ok) return undefined;
@@ -31,7 +28,7 @@ export async function getCycle(customerName: string, cycle: string) {
 
 export async function getUsers() {
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/user`, {
-    next: { revalidate: 0 },
+    next: { revalidate: 3600 },
   });
 
   if (!res.ok) return undefined;
@@ -40,52 +37,78 @@ export async function getUsers() {
   return data;
 }
 
+// export async function getSODData(
+//   searchValue: string,
+//   currentPage: number,
+//   limit: number,
+//   signal?: AbortSignal
+// ) {
+//   // const isProduction = process.env.NODE_ENV === "production";
+
+//   // if (isProduction) {
+//   const res = await fetch(
+//     `${process.env.NEXT_PUBLIC_BASE_URL}/api/sod?search=${encodeURIComponent(
+//       searchValue
+//     )}&page=${currentPage}&limit=${limit}`,
+//     { signal: signal }
+//     // { cache: "no-store" }
+//   );
+
+//   return res.json();
+//   // }
+// }
+
 export async function getSODData(
   searchValue: string,
   currentPage: number,
-  limit: number,
-  signal?: AbortSignal
+  limit: number
+  // signal?: AbortSignal
 ) {
-  // const isProduction = process.env.NODE_ENV === "production";
+  try {
+    const params = new URLSearchParams({
+      page: currentPage.toString(),
+      limit: limit.toString(),
+      search: searchValue.trim(),
+    });
+    
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/sod?${params.toString()}`
+      // { signal }
+    );
 
-  // if (isProduction) {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/sod?search=${encodeURIComponent(
-      searchValue
-    )}&page=${currentPage}&limit=${limit}`,
-    { signal: signal }
-    // { cache: "no-store" }
-  );
-
-  return res.json();
-  // }
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    return await res.json();
+  } catch (error) {
+    console.error("Fetch error:", error);
+    throw error; // Rethrow untuk handling di component
+  }
 }
 
-export async function getDataSOD(
-  currentPage: number,
-  limit: number,
-  signal?: AbortSignal
-) {
-  // const isProduction = process.env.NODE_ENV === "production";
+// export async function (
+//   currentPage: number,
+//   limit: number,
+//   signal?: AbortSignal
+// ) {
+//   // const isProduction = process.env.NODE_ENV === "production";
 
-  // if (isProduction) {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/sod?page=${currentPage}&limit=${limit}`,
-    { signal: signal }
-    // { cache: "no-store" }
-  );
+//   // if (isProduction) {
+//   const res = await fetch(
+//     `${process.env.NEXT_PUBLIC_BASE_URL}/api/sod?page=${currentPage}&limit=${limit}`,
+//     { signal: signal }
+//     // { cache: "no-store" }
+//   );
 
-  return res.json();
-  // }
-}
+//   return res.json();
+//   // }
+// }
 
 export async function getSOD() {
   // const isProduction = process.env.NODE_ENV === "production";
 
   // if (isProduction) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/sod`, {
-    next: { revalidate: 3600 },
-  });
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/sod`);
 
   return res.json();
   // }
@@ -96,7 +119,7 @@ export async function getDiagram() {
 
   // if (isProduction) {
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/diagram`, {
-    next: { revalidate: 0 },
+    next: { revalidate: 3600 },
   });
   const sod = await res.json();
   return sod;
@@ -107,9 +130,7 @@ export async function getBreaks() {
   // const isProduction = process.env.NODE_ENV === "production";
 
   // if (isProduction) {
-  const res2 = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/break/`, {
-    next: { revalidate: 0 },
-  });
+  const res2 = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/break/`);
   const breaks = await res2.json();
   return breaks;
   // }

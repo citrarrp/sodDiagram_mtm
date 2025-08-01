@@ -1,18 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  images: {
-    localPatterns: [
-      {
-        pathname: "/src/app/assets",
-        search: "",
-      },
-    ],
-  },
+  basePath: "/sodDiagram",
+  assetPrefix: "/sodDiagram/",
+  trailingSlash: true,
+  // images: {
+  //   localPatterns: [
+  //     {
+  //       pathname: "/src/public",
+  //       search: "",
+  //     },
+  //   ],
+  // },
   experimental: {
-    webpackMemoryOptimizations: true
-  }
-
+    webpackMemoryOptimizations: true,
+  },
 };
 
 export default nextConfig;

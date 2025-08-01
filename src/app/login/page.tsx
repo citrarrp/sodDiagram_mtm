@@ -18,8 +18,16 @@ export default function Page() {
   }, [router]);
 
   return (
-    <div className="w-full">
-      <LoginForm />
+    <div
+      className="relative w-full h-screen bg-cover bg-center"
+      style={{ backgroundImage: "url('/sodDiagram/bg-mtm.jpg')" }}
+    >
+      {/* Overlay transparan + blur */}
+      <div className="absolute inset-0 bg-gray-800/25 backdrop-blur-[1px]">
+        <div className="relative z-10">
+          <LoginForm />
+        </div>
+      </div>
     </div>
   );
 }

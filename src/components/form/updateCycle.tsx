@@ -29,11 +29,13 @@ type sod = {
   durasi: string;
   processName: string;
   updateMonth: string;
+  kodeCustomer: string;
 };
 
 interface FormValues {
   customerName: string;
   cycle: number;
+  kodeCustomer: string;
   processRows: ProcessRow[];
 }
 
@@ -73,8 +75,9 @@ const UpdateForm = ({
     clearErrors,
   } = useForm<FormValues>({
     defaultValues: {
-      customerName: customer,
+      customerName: customer.toUpperCase(),
       cycle: cyc,
+      kodeCustomer: data[0].kodeCustomer,
       processRows: filteredData.map((row) => ({
         ...row,
         processName: row.processName,
@@ -124,18 +127,22 @@ const UpdateForm = ({
     const payload = {
       customerName: formData.customerName,
       cycle: formData.cycle,
+      kodeCustomer: formData.kodeCustomer,
       updates: cleanedRows,
     };
     try {
-      const res = await fetch(`/api/diagram/${customer}-${cyc}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/diagram/${customer}_${cyc}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const result = await res.json();
       if (res.status === 200) {
-        router.refresh()
+        router.refresh();
         showToast("success", "Data berhasil diperbarui!");
         router.replace("/dashboard");
       } else {
@@ -539,6 +546,15 @@ const UpdateForm = ({
           {...register("cycle", { required: true, valueAsNumber: true })}
           className="w-auto font-semibold"
           disabled
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block mb-1">Kode Customer</label>
+        <input
+          type="text"
+          {...register("kodeCustomer")}
+          className="bg-gray-50 border font-normal w-auto leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-emerald-500 dark:focus:border-emerald-500"
         />
       </div>
 

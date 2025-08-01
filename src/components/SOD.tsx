@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import DeleteButton from "./deleteButton";
 import { MdEdit } from "react-icons/md";
@@ -37,12 +36,12 @@ export default function SODDiagram({
   sodHeader,
   data,
   Customer,
-  onDelete
+  onDelete,
 }: {
   sodHeader: DiagramProp;
   data: SODProp;
   Customer: string;
-  onDelete?: (customer: string, cycle: number) => void;
+  onDelete?: () => void;
 }) {
   const uniqueProcessNames: string[] = Array.from(
     new Set(
@@ -224,10 +223,10 @@ export default function SODDiagram({
                         className={`border px-2 py-2 border-gray-400 ${
                           cycleIndex === Object.keys(cycles).length - 1
                             ? "rounded-br-lg"
-                            : ""
+                             : ""
                         }`}
                       >
-                        <Link href={`/update/${customerName}-${cycle}`}>
+                        <Link href={`/update/${customerName}_${cycle}`}>
                           <button className="bg-emerald-500/90 cursor-pointer hover:bg-emerald-600 text-white justify-center w-full py-1 flex items-center gap-1.5 rounded">
                             <MdEdit />
                             Update
@@ -236,7 +235,9 @@ export default function SODDiagram({
                         <DeleteButton
                           customer={customerName}
                           cycle={Number(cycle)}
-                          onDelete={() => onDelete?.(customerName, Number(cycle))}
+                          onDelete={() =>
+                            onDelete?.()
+                          }
                         />
                       </td>
                     </tr>

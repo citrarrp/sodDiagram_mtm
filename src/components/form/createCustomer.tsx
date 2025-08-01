@@ -6,12 +6,12 @@ import {
   parseTimetonumber,
 } from "@/app/utils/timeDuration";
 import { useRouter } from "next/navigation";
-import React from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { IoArrowBackCircle, IoTime } from "react-icons/io5";
 import Link from "next/link";
 import Button from "../Button";
 import { useToast } from "../toast";
+import { useEffect, useState } from "react";
 interface ProcessRow {
   id: number;
   processName: string;
@@ -27,10 +27,12 @@ type sod = {
   durasi: string;
   processName: string;
   updateMonth: string;
+  kodeCustomer: string;
 };
 
 interface FormValues {
   customerName: string;
+  kodeCustomer: string;
   cycle: number;
   processRows: ProcessRow[];
 }
@@ -45,12 +47,17 @@ interface Break {
 const CreateForm = ({
   data,
   istirahat,
-}: {
+}: // onSuccess,
+{
   data: sod[];
   istirahat: Break[];
+  // onSuccess?: () => void;
 }) => {
   const router = useRouter();
   const { showToast } = useToast();
+  const [hasReset, setHasReset] = useState(false);
+  // const [dataLoaded, setDataLoaded] = useState(false);
+
   const filteredData = data.filter(
     (item) =>
       item.processName && !item.processName.toLowerCase().includes("lama")
@@ -60,6 +67,23 @@ const CreateForm = ({
     new Map(filteredData.map((field) => [field.processName, field])).values()
   );
 
+  const uniqueNama = Array.from(
+    new Set(filteredData.map((cust) => cust.customerName))
+  );
+
+  const cyclePerCustomer = new Map();
+
+  uniqueNama.forEach((nama) => {
+    const cycles = [
+      ...new Set(
+        filteredData
+          .filter((cust) => cust.customerName === nama)
+          .map((cust) => cust.cycle)
+      ),
+    ];
+    cyclePerCustomer.set(nama, cycles);
+  });
+
   const {
     control,
     setValue,
@@ -68,10 +92,12 @@ const CreateForm = ({
     clearErrors,
     setError,
     getValues,
+    reset,
   } = useForm<FormValues>({
     defaultValues: {
       customerName: "",
       cycle: 1,
+      kodeCustomer: "",
       processRows: uniqueFields.map((field) => ({
         processName: field.processName,
         waktu: "",
@@ -80,12 +106,34 @@ const CreateForm = ({
     },
   });
 
+  // const { fields } = useFieldArray({
+  //   control,
+  //   name: "processRows",
+  // });
+  useEffect(() => {
+    if (!hasReset && uniqueFields.length > 0) {
+      reset({
+        customerName: "",
+        cycle: 1,
+        kodeCustomer: "",
+        processRows: uniqueFields.map((field) => ({
+          id: Math.random(), // WAJIB tambahkan ID
+          processName: field.processName,
+          waktu: "",
+          durasi: "",
+        })),
+      });
+      setHasReset(true);
+    }
+  }, [uniqueFields, reset, hasReset]);
+
   const { fields } = useFieldArray({
     control,
     name: "processRows",
   });
 
   const onSubmit = async (formData: FormValues) => {
+    // Cek jika customer sudah ada dengan cycle yang sama
     const customerCycles = data
       .filter(
         (item) =>
@@ -101,28 +149,95 @@ const CreateForm = ({
       );
       return;
     }
+
+    // Validasi formData
+    if (!formData.customerName || !formData.cycle) {
+      showToast("failed", "Customer name dan cycle tidak boleh kosong.");
+      return;
+    }
+
     const payload = {
       customerName: formData.customerName,
       cycle: formData.cycle,
+      kodeCustomer: formData.kodeCustomer,
       updates: formData.processRows,
     };
+
     try {
-      const response = await fetch("/api/sod/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/sod/`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
       if (response.ok) {
-        router.refresh()
-        showToast("success", "Data berhasil disimpan!");
-        router.replace("/dashboard");
+        // Cek apakah router sudah ada dan valid
+        if (router) {
+          // router.refresh();
+          showToast("success", "Data berhasil ditambahkan!");
+          router.push("/dashboard");
+          // if (onSuccess) onSuccess();
+        } else {
+          showToast("failed", "Router tidak ditemukan.");
+        }
       } else {
         showToast("failed", "Terjadi kesalahan saat menyimpan data.");
       }
     } catch (error) {
-      showToast("failed", `Terjadi kesalahan saat menyimpan data: ${error}`);
+      if (error instanceof Error) {
+        showToast(
+          "failed",
+          `Terjadi kesalahan saat menyimpan data: ${error.message}`
+        );
+      } else {
+        showToast("failed", "Terjadi kesalahan saat menyimpan data.");
+      }
     }
   };
+
+  // const onSubmit = async (formData: FormValues) => {
+  //   const customerCycles = data
+  //     .filter(
+  //       (item) =>
+  //         item.customerName.toLowerCase() ===
+  //         formData.customerName.toLowerCase()
+  //     )
+  //     .map((item) => item.cycle);
+
+  //   if (customerCycles.includes(formData.cycle)) {
+  //     showToast(
+  //       "failed",
+  //       `Cycle ${formData.cycle} sudah ada untuk customer ${formData.customerName}`
+  //     );
+  //     return;
+  //   }
+  //   const payload = {
+  //     customerName: formData.customerName,
+  //     cycle: formData.cycle,
+  //     updates: formData.processRows,
+  //   };
+  //   try {
+  //     const response = await fetch(
+  //       `${process.env.NEXT_PUBLIC_BASE_URL}/api/sod/`,
+  //       {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify(payload),
+  //       }
+  //     );
+  //     if (response.ok) {
+  //       router.refresh();
+  //       showToast("success", "Data berhasil disimpan!");
+  //       router.replace("/dashboard");
+  //     } else {
+  //       showToast("failed", "Terjadi kesalahan saat menyimpan data.");
+  //     }
+  //   } catch (error) {
+  //     showToast("failed", `Terjadi kesalahan saat menyimpan data: ${error}`);
+  //   }
+  // };
 
   const updateProcessTimes = (
     processRows: ProcessRow[],
@@ -348,6 +463,19 @@ const CreateForm = ({
       nextField?.focus();
     }
   };
+  // if (!dataLoaded) {
+  //   return (
+  //     <div className="flex items-center justify-center h-screen bg-white-100">
+  //       <div className="flex flex-col items-center space-y-4">
+  //         <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+
+  //         <p className="text-lg font-semibold text-emerald-900 animate-pulse">
+  //           Loading...
+  //         </p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -361,15 +489,22 @@ const CreateForm = ({
       <div className="mb-4">
         <label className="block mb-1">Customer Name</label>
         <input
+          list="customers"
           {...register("customerName", { required: true })}
           className="border rounded w-auto p-3"
-          autoFocus={true}
+          autoFocus
+          placeholder="Pilih atau tambah customer baru"
         />
+        <datalist id="customers">
+          {uniqueNama.map((cust) => (
+            <option key={cust} value={cust} />
+          ))}
+        </datalist>
       </div>
 
       <div className="mb-4">
         <label className="block mb-1">Cycle</label>
-        <input
+        {/* <input
           type="number"
           min={1}
           {...register("cycle", {
@@ -378,6 +513,24 @@ const CreateForm = ({
           })}
           className="w-auto border rounded p-3"
           required
+        /> */}
+        <input
+          type="number"
+          min={1}
+          {...register("cycle", { required: true, valueAsNumber: true })}
+          className="border rounded w-[400px] p-3"
+          placeholder="Masukkan kode customer untuk identifikasi master data!"
+          autoFocus
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block mb-1">Kode Customer</label>
+        <input
+          type="text"
+          {...register("kodeCustomer")}
+          className="border rounded w-[400px] p-3"
+          autoFocus
         />
       </div>
 

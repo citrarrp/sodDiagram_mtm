@@ -26,7 +26,7 @@ export function SOD(data: Data[]) {
 
   if (data && Array.isArray(data)) {
     data.forEach((item) => {
-      const key = `${item.customerName}-${item.cycle}`;
+      const key = `${item.customerName}_${item.cycle}`;
       if (!grouped.has(key)) {
         grouped.set(key, []);
       }
@@ -37,7 +37,7 @@ export function SOD(data: Data[]) {
 
     grouped.forEach((items, key) => {
       const [customerName, cycle] = key
-        .split("-")
+        .split("_")
         .map((v, i) => (i === 1 ? Number(v) : v));
 
       items.sort((a, b) => a.id - b.id);

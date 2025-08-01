@@ -9,7 +9,7 @@ export default async function Page({
 }) {
   const { id } = await params;
 
-  const [customerNameRaw, cycleRaw] = id.split("-");
+  const [customerNameRaw, cycleRaw] = id.split("_");
   const customerName = decodeURIComponent(customerNameRaw);
   const cycle = decodeURIComponent(cycleRaw);
 

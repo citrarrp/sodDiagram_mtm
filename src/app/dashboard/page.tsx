@@ -1,18 +1,12 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import SODDiagram from "@/components/SOD";
 import GanttChart from "@/components/ganntChart";
 import Shifts from "@/components/break";
 import BarChartSimple from "@/components/simpleChart";
 import { SOD } from "@/components/gantt";
 import { getColor } from "@/app/utils/color";
-import {
-  getBreaks,
-  getDataSOD,
-  getDiagram,
-  getShifts,
-  getSODData,
-} from "@/lib/function";
+import { getBreaks, getDiagram, getShifts, getSODData } from "@/lib/function";
 import Link from "next/link";
 import CustomerAccordion from "@/components/accordion";
 import { IoMdAddCircleOutline } from "react-icons/io";
@@ -23,6 +17,8 @@ import LogoutButton from "@/components/logoutButton";
 import { useAuth } from "../context/useAuth";
 import { FaUserPlus } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import Button from "@/components/Button";
+import Image from "next/image";
 // import Button from "@/components/Button";
 
 type task = {
@@ -216,31 +212,52 @@ export default function Page() {
 
   const onPageChange = (page: number) => {
     setCurrentPage(page);
-    setSearchData("");
+    // setSearchData("");
   };
 
-  const controllerRef = useRef<AbortController>(null);
+  const searchCustomer = useDebouncedCallback(async () => {
+    setLoading(true);
+    const retrieveSODresponse: SODResponse = await getSODData(
+      searchData,
+      currentPage,
+      5
+    );
+
+    if (!retrieveSODresponse.success) {
+      setfilteredSOD(sod);
+      setLoading(false);
+      return;
+    }
+    if (retrieveSODresponse.data) {
+      setDataSOD(retrieveSODresponse);
+      setfilteredSOD(retrieveSODresponse);
+      setTotalPages(retrieveSODresponse.totalPages);
+      setLoading(false);
+    }
+  }, 1000);
+
   useEffect(() => {
-    const fetchUser = async () => {
-      const res = await fetch("/api/me", { credentials: "include" });
-      if (res.ok) {
+    setCurrentPage(1);
+  }, [searchData]);
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/me`, {
+          credentials: "include",
+        });
+        if (!res.ok) {
+          router.replace("/login");
+          return;
+        }
+
         const data = await res.json();
         const isAdmin = (data.user?.username || "").includes("admin");
         setIsAdmin(isAdmin);
-      } else {
-        router.replace("/login");
-      }
-    };
 
-    fetchUser();
-
-    const controller = new AbortController();
-    controllerRef.current = controller;
-    const fetchFiltered = async () => {
-      setLoading(true);
-      try {
+        setLoading(true);
         const [sodRes, shiftRes, breakRes, diagramRes] = await Promise.all([
-          getDataSOD(currentPage, 5, controllerRef.current?.signal),
+          getSODData("", currentPage, 5),
           getShifts(),
           getBreaks(),
           getDiagram(),
@@ -253,67 +270,56 @@ export default function Page() {
           setBreaks(breakRes);
           setDiagram(diagramRes);
         }
+
+        if (searchData.trim() !== "") {
+          searchCustomer();
+        }
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
     };
-    fetchFiltered();
-  }, [currentPage, router, setIsAdmin]);
+    fetchAll();
+  }, [currentPage, router, setIsAdmin, searchData, searchCustomer]);
 
-  const handleClientAction = (customer: string, cycle: number) => {
+  const fetchInitialData = async () => {
+    const sodRes = await getSODData("", currentPage, 5);
+    setDataSOD(sodRes);
+    setfilteredSOD(sodRes);
+  };
+  const handleClientAction = () => {
     if (!filteredSOD || !filteredSOD.data) return;
 
-    const updatedData = filteredSOD.data.filter(
-      (item) =>
-        !(
-          item.customerName === customer && Number(item.cycle) === Number(cycle)
-        )
-    );
+    // setfilteredSOD((prev) => ({
+    //   ...prev,
+    //   data: prev.data.filter(
+    //     (item) => !(item.customerName === customer && item.cycle === cycle)
+    //   ),
+    // }));
 
-    const updatedSOD: SODResponse = {
-      ...filteredSOD,
-      data: updatedData,
-    };
+    fetchInitialData();
 
-    setfilteredSOD(updatedSOD);
+    // const updatedData = filteredSOD.data.filter(
+    //   (item) =>
+    //     !(
+    //       item.customerName === customer && Number(item.cycle) === Number(cycle)
+    //     )
+    // );
+
+    // const updatedSOD: SODResponse = {
+    //   ...filteredSOD,
+    //   data: updatedData,
+    // };
+
+    // console.log(updatedSOD)
+    // setfilteredSOD(updatedSOD);
   };
-
-  const searchCustomer = useDebouncedCallback(async () => {
-    setLoading(true);
-    if (searchData.trim() !== "") {
-      const retrieveSODresponse: SODResponse = await getSODData(
-        searchData,
-        currentPage,
-        5,
-        controllerRef.current?.signal
-      );
-
-      if (!retrieveSODresponse.success) {
-        setfilteredSOD(sod);
-        setLoading(false);
-        return;
-      }
-      if (retrieveSODresponse.data) {
-        setfilteredSOD(retrieveSODresponse);
-        setTotalPages(retrieveSODresponse.totalPages);
-        setLoading(false);
-      }
-    } else {
-      if (sod) {
-        setfilteredSOD(sod);
-        setTotalPages(sod.totalPages);
-      }
-      setLoading(false);
-      return;
-    }
-  }, 1000);
 
   const handleChange = (value: string) => {
     setSearchData(value);
-    searchCustomer();
   };
+
   const hasil = useMemo(() => SOD(filteredSOD?.data || []), [filteredSOD]);
   const grouped = useMemo(() => {
     return (hasil || []).reduce((acc: groupedCust[], item: cycleProcess) => {
@@ -388,8 +394,19 @@ export default function Page() {
   return (
     <div className="items-center justify-items-center p-6 sm:p-10 font-[family-name:var(--poppins-font)] max-w-screen min-h-screen w-full h-full growflex-1">
       <div className="w-full flex justify-between mb-5">
+        <Image
+          src="/sodDiagram/pt_mtm.jpg"
+          alt="PT Menara Terus Makmur"
+          width={200}
+          height={25}
+          // placeholder="blur"
+          style={{
+            objectFit: "fill",
+          }}
+          className="shadow-none drop-shadow-none mb-6"
+        />
         <h1 className="font-semibold text-3xl text-emerald-600 border-b-2 h-[50px]">
-          SOD Menara Terus Makmur
+          SHIPPING OPERATION DIAGRAM
         </h1>
         <div className="flex items-center gap-5">
           {isAdmin && (
@@ -403,11 +420,11 @@ export default function Page() {
           <LogoutButton />
         </div>
       </div>
-      {/* <div className="w-full mx-auto mb-10">
+      <div className="w-full mx-auto mb-10">
         <Button type="button" onClick={() => router.replace("/display")}>
           Lihat Display
         </Button>
-      </div> */}
+      </div>
       {sod && data && breaks && diagram && (
         <main className="flex flex-col row-start-2 items-center sm:items-start w-full h-full min-h-screen overflow-hidden">
           <div className="flex justify-between items-center w-full mb-5 gap-4">

@@ -13,6 +13,7 @@ interface UpdateRow {
 interface UpdatePayload {
   customerName: string;
   cycle: number;
+  kodeCustomer: string;
   updates: UpdateRow[];
 }
 
@@ -20,7 +21,7 @@ export async function PUT(req: NextRequest) {
   try {
     const body: UpdatePayload = await req.json();
 
-    const { customerName, cycle, updates } = body;
+    const { customerName, cycle, kodeCustomer, updates } = body;
 
     const date = new Date();
     const existingData = await prisma.soddiagram.findMany({
@@ -39,17 +40,27 @@ export async function PUT(req: NextRequest) {
         data: {
           processName: row.processName,
           waktu: row.waktu
-            ? new Date(`1970-01-01T${row.waktu}Z`).toISOString()
+            ? new Date(`2025-01-01T${row.waktu}Z`).toISOString()
             : null,
           durasi: row.durasi
-            ? new Date(`1970-01-01T${row.durasi}Z`).toISOString()
+            ? new Date(`2025-01-01T${row.durasi}Z`).toISOString()
             : null,
           updateMonth: date.toLocaleString("default", { month: "long" }),
+          kodeCustomer: kodeCustomer,
         },
       })
     );
 
-    await Promise.all(updatePromises);
+    const updateAllPromises = prisma.soddiagram.updateMany({
+      where: {
+        customerName: customerName,
+      },
+      data: {
+        updateMonth: date.toLocaleString("default", { month: "long" }),
+        kodeCustomer: kodeCustomer,
+      },
+    });
+    await Promise.all([...updatePromises, updateAllPromises]);
 
     return res.json({ message: "Data berhasil diperbarui!" }, { status: 200 });
   } catch (error) {
@@ -108,7 +119,7 @@ export async function GET(
   try {
     const id = (await params).id;
 
-    const [customerNameRaw, cycleRaw] = id.split("-");
+    const [customerNameRaw, cycleRaw] = id.split("_");
     const customerName = decodeURIComponent(customerNameRaw);
     const cycle = decodeURIComponent(cycleRaw);
 

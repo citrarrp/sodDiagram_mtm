@@ -1,23 +1,23 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useToast } from "./toast";
 import { MdDelete } from "react-icons/md";
 
 export default function DeleteUser({
-  id
+  id,
+  onSuccess,
 }: {
   id: number;
+  onSuccess: () => void;
 }) {
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const { showToast } = useToast();
   const handleDelete = async () => {
     setLoading(true);
 
     try {
       const response = await fetch(
-        `/api/user?id=${id}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/user?id=${id}`,
         {
           method: "DELETE",
         }
@@ -25,11 +25,13 @@ export default function DeleteUser({
 
       const data = await response.json();
       if (response.ok) {
-        router.refresh();
-
         showToast("success", "Data berhasil dihapus!");
+        onSuccess();
       } else {
-        showToast("failed", `Terjadi kesalahan saat menghapus data: ${data.message}`);
+        showToast(
+          "failed",
+          `Terjadi kesalahan saat menghapus data: ${data.message}`
+        );
       }
     } catch (error) {
       showToast("failed", `${error}`);

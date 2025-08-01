@@ -6,7 +6,10 @@ export default function LogoutButton() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    const response = await fetch("/api/user/logout", { method: "POST" });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/user/logout`,
+      { method: "POST" }
+    );
 
     if (response.ok) {
       router.replace("/login");

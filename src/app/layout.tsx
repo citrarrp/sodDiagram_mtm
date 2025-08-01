@@ -27,9 +27,7 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} font-[family-name:var(--poppins-font)] antialiased min-h-screen flex flex-col`}
       >
-        <AuthProvider>
-          {children}
-          </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
         <Toaster position="top-right" richColors />
       </body>
     </html>

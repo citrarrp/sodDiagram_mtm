@@ -6,6 +6,9 @@ import BarChartSimple from "@/components/simpleChart";
 import { SOD } from "@/components/gantt";
 import { getColor } from "@/app/utils/color";
 import { getBreaks, getDiagram, getShifts, getSOD } from "@/lib/function";
+import Link from "next/link";
+import { IoArrowBackCircle } from "react-icons/io5";
+import ProsesChart from "@/components/chartProses";
 
 type task = {
   processName: string;
@@ -191,7 +194,12 @@ export default function Page() {
   const [breaks, setBreaks] = useState<BreakResponse>();
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
   const [diagram, setDiagram] = useState<DiagramResponse>();
+  // const [isWrapping, setWrapping] = useState<boolean>(false);
+  // const [isPulling, setPulling] = useState<boolean>(false);
+  // const [isLoadTruck, setLoadTruck] = useState<boolean>(false);
+  const [selectedProses, setSelectedProses] = useState<string | null>(null);
 
+  const processes = ["PULLING (60')", "WRAPPING", "LOADING TRUCK (30')"];
   const controllerRef = useRef<AbortController>(null);
   useEffect(() => {
     const controller = new AbortController();
@@ -286,12 +294,83 @@ export default function Page() {
     [grouped]
   );
 
+  const hasilProses = useMemo(
+    () =>
+      sod?.data.filter(
+        (item) => item.processName === selectedProses || item.processName === ""
+      ),
+    [sod?.data, selectedProses]
+  );
+  // console.log(hasilProses);
+
+  // const tinggiReal =
+  //   Math.round((hasilProses?.length ? hasilProses.length : 0) / 9) * 300;
+
+  // const hasilProsesSelect = useMemo(
+  //   () => SOD(hasilProses || []),
+  //   [hasilProses]
+  // );
+  // const groupedProses = useMemo(() => {
+  //   return (hasilProsesSelect || []).reduce(
+  //     (acc: groupedCust[], item: cycleProcess) => {
+  //       const existing = acc.find(
+  //         (cust) => cust.customerName === item.customerName
+  //       );
+  //       if (existing) {
+  //         existing.cycles.push(item);
+  //       } else {
+  //         acc.push({
+  //           customerName: item.customerName,
+  //           cycles: [item],
+  //           updateMonth: item.updateMonth,
+  //         });
+  //       }
+  //       return acc;
+  //     },
+  //     []
+  //   );
+  // }, [hasilProsesSelect]);
+
+  // const allCyclesProsesSelect = useMemo(() => {
+  //   return groupedProses.flatMap((customer) =>
+  //     customer.cycles.map((cycle, index) => ({
+  //       customer: customer.customerName,
+  //       cycle: cycle.cycle,
+  //       color: getColor(index),
+  //     }))
+  //   );
+  // }, [groupedProses]);
+
   return (
-    <div className="h-full my-10 items-center mx-auto flex justify-center">
+    <div className=" my-10 items-center mx-auto flex justify-center">
       {sod && data && breaks && diagram && (
-        <main className="flex flex-col items-center w-full h-full min-h-screen overflow-hidden px-4">
+        <main className="flex flex-col items-center w-full min-h-fit px-4">
           <div className="w-full max-w-[1200px] mx-auto mb-1">
-            <div className="relative">
+            <div className="flex align-middle">
+              <Link href="/" className="mx-5">
+                <IoArrowBackCircle size={25} />
+              </Link>
+              <div className="flex justify-between gap-2">
+                {processes.map((process) => (
+                  <button
+                    key={process}
+                    onClick={() =>
+                      setSelectedProses((prev) =>
+                        prev === process ? null : process
+                      )
+                    }
+                    className={`px-4 py-2 rounded-lg text-sm ${
+                      selectedProses === process
+                        ? "bg-blue-600 text-white font-medium"
+                        : "bg-gray-200 hover:bg-gray-300"
+                    }`}
+                  >
+                    {process.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="relative mt-2">
               <div className="flex overflow-x-auto pb-4 gap-2 hide-scrollbar">
                 {Array.from(new Set(sod.data.map((item) => item.customerName)))
                   .sort((a, b) => a.localeCompare(b))
@@ -316,7 +395,7 @@ export default function Page() {
               <div className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-white to-transparent pointer-events-none" />
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-10 min-w-full h-full w-full">
+          <div className="grid grid-cols-1 gap-10 min-w-full w-full">
             {loading ? (
               <div className="flex items-center justify-center h-screen bg-white-100">
                 <div className="flex flex-col items-center space-y-4">
@@ -346,7 +425,7 @@ export default function Page() {
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : selectedProses == null || selectedProses == undefined ? (
               grouped
                 ?.filter(
                   (customer) =>
@@ -354,6 +433,7 @@ export default function Page() {
                     customer.customerName === selectedCustomer
                 )
                 .map((customer: groupedCust) => {
+                  // console.log("disnis", selectedCustomer);
                   const customerProcess = uniqueProcessPerCustomer.find(
                     (proc) => proc.customerName === customer.customerName
                   );
@@ -392,6 +472,25 @@ export default function Page() {
                     </div>
                   );
                 })
+            ) : (
+              // groupedProses.map((customer: groupedCust) => {
+              //   const customerProcess = uniqueProcessPerCustomer.find(
+              //     (proc) => proc.customerName === customer.customerName
+              //   );
+              // return (
+              <div className="w-full h-full mb-20">
+                <div className="relative w-[1145px] pb-115 pt-5 h-full">
+                  <div className="relative mb-10 ml-25 w-[1040px]">
+                    <Shifts data={data.data} />
+                  </div>
+                  <div className={`w-full`}>
+                    <ProsesChart
+                      sodD={hasilProses || []}
+                      breaks={breaks.data}
+                    />
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </main>

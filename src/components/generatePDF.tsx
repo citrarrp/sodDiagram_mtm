@@ -4,7 +4,6 @@ import React from "react";
 import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { IoMdPrint } from "react-icons/io";
-import ptMTM from "@/app/assets/pt_mtm.jpg";
 import Image from "next/image";
 
 const GeneratePDF = ({
@@ -46,6 +45,23 @@ const GeneratePDF = ({
     setIsPrint(false);
   };
 
+ const monthMap = {
+  'January': 'Januari',
+  'February': 'Februari',
+  'March': 'Maret',
+  'April': 'April',
+  'May': 'Mei',
+  'June': 'Juni',
+  'July': 'Juli',
+  'August': 'Agustus',
+  'September': 'September',
+  'October': 'Oktober',
+  'November': 'November',
+  'December': 'Desember'
+} as const;
+
+type MonthKey = keyof typeof monthMap;
+
   return (
     <div>
       <div
@@ -61,11 +77,12 @@ const GeneratePDF = ({
                   className="w-1/6 border-1 border-black align-middle bg-white px-1"
                 >
                   <Image
-                    src={ptMTM}
+                    src="/sodDiagram/pt_mtm.jpg"
                     alt="PT Menara Terus Makmur"
                     width={400}
                     height={85}
-                    placeholder="blur"
+                    // placeholder="blur"
+                    // blurDataURL="/public/pt_mtm.jpg"
                     style={{
                       width: "400px",
                       height: "85px",
@@ -120,7 +137,7 @@ const GeneratePDF = ({
                   rowSpan={2}
                   className="text-md font-semibold text-center border-1 border-black px-2 py-1"
                 >
-                  {updateMonth}/{year}
+                  {monthMap[updateMonth as MonthKey] || updateMonth}/{year}
                 </td>
                 <td className="text-md text-left border-1 border-black px-2 py-1">
                   customer

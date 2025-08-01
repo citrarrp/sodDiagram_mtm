@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useToast } from "./toast";
 import { MdDelete } from "react-icons/md";
 
@@ -11,17 +10,18 @@ export default function DeleteButton({
 }: {
   customer: string;
   cycle: number;
-  onDelete?: (customer: string, cycle: number) => void;
+  onDelete?: () => void;
 }) {
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const { showToast } = useToast();
   const handleDelete = async () => {
     setLoading(true);
 
     try {
       const response = await fetch(
-        `/api/diagram?customer=${encodeURIComponent(customer)}&cycle=${cycle}`,
+        `${
+          process.env.NEXT_PUBLIC_BASE_URL
+        }/api/diagram?customer=${encodeURIComponent(customer)}&cycle=${cycle}`,
         {
           method: "DELETE",
         }
@@ -29,9 +29,8 @@ export default function DeleteButton({
 
       const data = await response.json();
       if (response.ok) {
-        router.refresh();
         showToast("success", "Data berhasil dihapus!");
-        onDelete?.(customer, cycle);
+        onDelete?.();
       } else {
         showToast(
           "failed",

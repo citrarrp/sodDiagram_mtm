@@ -1,48 +1,48 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { FaLock, FaUser } from "react-icons/fa";
 import InputField from "@/components/inputField";
 import Button from "@/components/Button";
-import { userCreateSchema, userLoginSchema } from "@/app/schema/userSchema";
+import { userCreateSchema } from "@/app/schema/userSchema";
 import { useToast } from "../toast";
 import Link from "next/link";
 import { IoArrowBackCircle } from "react-icons/io5";
-import { useRouter } from "next/navigation";
 
 type CreateFormData = z.infer<typeof userCreateSchema>;
 
-export default function RegisterForm({ token }: { token: string }) {
+export default function RegisterForm({
+  onSuccess,
+}: {
+  onSuccess?: () => void;
+}) {
   const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-  useEffect(() => {
-    if (!token) {
-      router.replace("/dashboard");
-    }
-  }, [router, token]);
-
   const {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<CreateFormData>({
-    resolver: zodResolver(userLoginSchema),
+    resolver: zodResolver(userCreateSchema),
   });
 
   const onSubmit = async (data: CreateFormData) => {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/user/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/user/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
 
       const result = await res.json();
 
@@ -50,8 +50,10 @@ export default function RegisterForm({ token }: { token: string }) {
         showToast("failed", result.error || "Gagal melakukan pendaftaran!");
         return;
       }
-      router.refresh()
-      showToast("success", "Pendaftaran berhasil!");
+
+      showToast("success", "Data berhasil ditambahkan!");
+      reset();
+      if (onSuccess) onSuccess();
     } catch (err) {
       showToast("failed", `Terjadi kesalahan saat mendaftarkan user: ${err}`);
     } finally {
